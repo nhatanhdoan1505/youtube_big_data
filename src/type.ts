@@ -13,6 +13,7 @@ export interface VideoInfor extends VideoStatistics {
   id: string;
   title: string;
   publicAt: string;
+  days: number;
 }
 
 export interface VideoStatistics {

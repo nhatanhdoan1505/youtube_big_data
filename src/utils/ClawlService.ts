@@ -35,6 +35,9 @@ export class ClawlService {
         publicAt,
         thumbnail,
       });
+
+      let days =
+        Math.abs(new Date().getTime() - new Date(publicAt).getTime()) / 3600000;
       return {
         views: +viewText.split(" ")[0].replace(/\./g, ""),
         likes: +likeDislikeText.split("/")[0].replace(/\./g, ""),
@@ -43,6 +46,7 @@ export class ClawlService {
         title,
         publicAt,
         thumbnail,
+        days,
       };
     } catch (error) {
       if (error.response) {

@@ -66,7 +66,7 @@ export class MainService {
         .filter((v) => v.id.videoId)
         .map((v) => {
           return {
-            thumbnail: v.snippet.thumbnails.default.url,
+            thumbnail: v.snippet.thumbnails.high.url,
             id: v.id.videoId,
             title: v.snippet.title,
             publicAt: v.snippet.publishedAt,
