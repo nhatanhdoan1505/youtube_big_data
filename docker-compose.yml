@@ -1,0 +1,25 @@
+version: '3'
+services:
+  mongodb:
+    image: mongo
+    volumes:
+      - ./mongodb/db:/data/db
+    ports:
+      - "27017:27017"
+    environment: 
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=123456
+    command: [--auth]
+  game:
+    container_name: youtubedata
+    build: .
+    ports:
+      - "3000:3000"
+    links:
+      - mongodb
+    command: npm start
+    volumes:
+    - ./:/app
+    - /app/node_modules
+    depends_on:
+      - mongodb
