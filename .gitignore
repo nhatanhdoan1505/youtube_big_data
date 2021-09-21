@@ -2,3 +2,4 @@ node_modules
 dist
 mongodb
 package-lock.json
+.env
