@@ -5,38 +5,37 @@ import * as bodyParser from "body-parser";
 import { ClawlService } from "./utils/ClawlService";
 import { YoutubeService } from "./utils/YoutubeSevice";
 import { MainService } from "./utils/MainService";
-import fs from "fs";
+import { Router } from "./router";
+import { connectMongo } from "./mongo";
 import dotenv = require("dotenv");
+import { ChannelService } from "./models/channel/service";
 dotenv.config();
 
-const main = () => {
+const main = async () => {
+  const app = express();
+
+  const chanelService: ChannelService = new ChannelService();
+
   const clawlService = new ClawlService();
   const youtubeService = new YoutubeService(
     process.env.API_KEY.split(","),
     clawlService
   );
   const mainService = new MainService(clawlService, youtubeService);
+  const router = new Router(app, mainService);
 
-  const app = express();
+  await connectMongo();
 
   app.use(express.static(path.join(__dirname)));
   app.use(cors());
   app.use(express.json());
   app.use(bodyParser.urlencoded({ extended: false }));
 
-  app.get("/", async (req, res) => {
-    const listUrl: string[] = req.body.url
-      .split(",")
-      .map((url) => url.replace("//", ""))
-      .map((url) => url.split("/"))
-      .map((url) => url[url.length - 1]);
+  router.route();
 
-    const channelData = await mainService.getChannel(listUrl);
-    return res.status(200).json({ status: "OK" });
-  });
+  // chanelService.createChannel({ label: "" });
 
   const port = process.env.PORT || 3000;
-
   app.listen(port, () => console.log(`Server is listenning at port ${port}`));
 };
 

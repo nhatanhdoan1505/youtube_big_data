@@ -29,11 +29,8 @@ export class YoutubeService {
         `https://www.googleapis.com/youtube/v3/channels?part=statistics&part=snippet${idEndpoint}&key=${apiKey}`
       );
     } catch (error) {
-      console.log({ apiKey });
-      console.log("Het han. Here is queryChannelSnippet", error.response.data);
       this.removeExpiredKey(apiKey);
       apiKey = this.getKey();
-      console.log({ apiKey });
       return await axios.get(
         `https://www.googleapis.com/youtube/v3/channels?part=statistics&part=snippet${idEndpoint}&key=${apiKey}`
       );
@@ -50,11 +47,8 @@ export class YoutubeService {
     try {
       return await axios.get(url);
     } catch (error) {
-      console.log({ apiKey });
-      console.log("Het han. Here is queryVideoSnippet", error.response.data);
       this.removeExpiredKey(apiKey);
       apiKey = this.getKey();
-      console.log({ apiKey });
       url = !pageToken
         ? `https://youtube.googleapis.com/youtube/v3/search?part=snippet&channelId=${channelId}&maxResults=50&order=date&key=${apiKey}`
         : `https://youtube.googleapis.com/youtube/v3/search?part=snippet&channelId=${channelId}&pageToken=${pageToken}&maxResults=50&order=date&key=${apiKey}`;
