@@ -26,6 +26,7 @@ export class ClawlService {
           .videoPrimaryInfoRenderer.viewCount.videoViewCountRenderer.viewCount
           .simpleText;
 
+      console.log({ viewText, likeDislikeText });
       console.log({
         views: +viewText.split(" ")[0].replace(/\./g, ""),
         likes: +likeDislikeText.split("/")[0].replace(/\./g, ""),
