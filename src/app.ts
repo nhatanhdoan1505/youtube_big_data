@@ -8,13 +8,13 @@ import { MainService } from "./utils/MainService";
 import { Router } from "./router";
 import { connectMongo } from "./mongo";
 import dotenv = require("dotenv");
-import { ChannelService } from "./models/channel/service";
+import { ChannelController } from "./controller/ChannelController";
+import { CronJob } from "./cronJob";
+
 dotenv.config();
 
 const main = async () => {
   const app = express();
-
-  const chanelService: ChannelService = new ChannelService();
 
   const clawlService = new ClawlService();
   const youtubeService = new YoutubeService(
@@ -22,7 +22,9 @@ const main = async () => {
     clawlService
   );
   const mainService = new MainService(clawlService, youtubeService);
-  const router = new Router(app, mainService);
+  const channelController = new ChannelController(mainService);
+
+  const router = new Router(app, channelController);
 
   await connectMongo();
 
@@ -33,7 +35,8 @@ const main = async () => {
 
   router.route();
 
-  // chanelService.createChannel({ label: "" });
+  const cronJob = new CronJob(channelController);
+  //cronJob.updateChannelStatistics();
 
   const port = process.env.PORT || 3000;
   app.listen(port, () => console.log(`Server is listenning at port ${port}`));

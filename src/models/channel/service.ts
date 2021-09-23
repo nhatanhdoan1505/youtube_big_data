@@ -11,16 +11,16 @@ export class ChannelService {
     return await _session.save();
   }
 
-  async filterChannel(query) {
-    return await Channel.find(query);
+  async filterChannel(query): Promise<IChannel[]> {
+    return await Channel.find(query).lean();
   }
 
-  async findChannel(query) {
-    return await Channel.findOne(query);
+  async findChannel(query): Promise<IChannel> {
+    return await Channel.findOne(query).lean();
   }
 
-  async updateChannel(query, params) {
-    return await Channel.findOneAndUpdate(query, params, { new: true });
+  async updateChannel(query, params): Promise<IChannel> {
+    return await Channel.findOneAndUpdate(query, params, { new: true }).lean();
   }
 
   async deleteChannel(query) {

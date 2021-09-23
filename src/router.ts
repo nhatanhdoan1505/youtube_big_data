@@ -1,15 +1,16 @@
 import { MainService } from "./utils/MainService";
 import { ChannelService } from "./models/channel/service";
-import { IChannel } from "./models/channel/type";
+import { IChannel, IVideo } from "./models/channel/type";
+import { ChannelController } from "./controller/ChannelController";
 
 export class Router {
   private app;
-  private mainService: MainService;
   private channelService: ChannelService = new ChannelService();
+  private channelController: ChannelController;
 
-  constructor(app, mainService: MainService) {
+  constructor(app, channelController: ChannelController) {
     this.app = app;
-    this.mainService = mainService;
+    this.channelController = channelController;
   }
 
   route() {
@@ -22,16 +23,24 @@ export class Router {
 
       const label = req.body.label;
 
-      let channelData = await this.mainService.getChannel(listUrl);
-      channelData = channelData.map((c) => {
-        return { ...c, label };
-      });
-
+      const channelData = await this.channelController.getVideosOfChannel(
+        listUrl,
+        label
+      );
       const saveDataPromise = channelData.map((c: IChannel) =>
         this.channelService.createChannel(c)
       );
       await Promise.all(saveDataPromise);
       return res.status(200).json({ status: "OK" });
+    });
+
+    this.app.get("/scan", async (req, res) => {
+      const newData = await this.channelController.scanOldChannelInfor();
+      const updateChannelPromise = newData.map((c) =>
+        this.channelService.updateChannel({ id: c.id }, c)
+      );
+      await Promise.all(updateChannelPromise);
+      return res.status(200).json({ status: "OK", data: newData });
     });
   }
 }

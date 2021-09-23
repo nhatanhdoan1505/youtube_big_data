@@ -11,10 +11,7 @@ export class YoutubeService {
   }
 
   removeExpiredKey(key: string) {
-    console.log("remove key", key);
-    console.log(this.API_KEYs);
     this.API_KEYs = this.API_KEYs.filter((k) => k !== key);
-    console.log(this.API_KEYs);
   }
 
   getKey() {

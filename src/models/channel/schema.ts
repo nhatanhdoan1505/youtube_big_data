@@ -6,7 +6,7 @@ export default mongoose.model(
   "Channel",
   new schema({
     _id: { type: Types.ObjectId },
-    lable: { type: String },
+    label: { type: String, default: "" },
     urlChannel: { type: String },
     id: { type: String },
     subscribe: { type: Number, default: 0 },
@@ -26,7 +26,7 @@ export default mongoose.model(
         likes: { type: Number, default: 0 },
         dislikes: { type: Number, default: 0 },
         views: { type: Number, default: 0 },
-        olldViews: { type: Number, default: 0 },
+        oldViews: { type: Number, default: 0 },
       },
     ],
   })

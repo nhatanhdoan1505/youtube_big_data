@@ -9,15 +9,17 @@ export interface IChannel {
   oldViews: number;
   oldSubscribe: number;
   oldNumberVideos: number;
-  videoList: [{
-    thumbnail: string;
-    id: string;
-    title: string;
-    publicAt: string;
-    days: number;
-    likes: number;
-    dislikes: number;
-    views: number;
-    oldViews: number;
-  }];
+  videoList: [IVideo];
+}
+
+export interface IVideo {
+  thumbnail: string;
+  id: string;
+  title: string;
+  publicAt: string;
+  days: number;
+  likes: number;
+  dislikes: number;
+  views: number;
+  oldViews: number;
 }
