@@ -27,11 +27,12 @@ export class Router {
         listUrl,
         label
       );
-      const saveDataPromise = channelData.map((c: IChannel) =>
-        this.channelService.createChannel(c)
-      );
-      await Promise.all(saveDataPromise);
-      return res.status(200).json({ status: "OK" });
+
+      // const saveDataPromise = channelData.map((c: IChannel) =>
+      //   this.channelService.createChannel(c)
+      // );
+      // await Promise.all(saveDataPromise);
+      return res.status(200).json({ status: "OK", data: channelData });
     });
 
     this.app.get("/scan", async (req, res) => {
@@ -41,6 +42,41 @@ export class Router {
       );
       await Promise.all(updateChannelPromise);
       return res.status(200).json({ status: "OK", data: newData });
+    });
+
+    this.app.get("/sort/:id", async (req, res) => {
+      if (!req.params.id || !req.body.query)
+        return res
+          .status(400)
+          .json({ status: "FAIL", msg: "Insufficient paramester" });
+
+      const data = await this.channelController.getVideoDataSort(
+        req.params.id,
+        req.body.query
+      );
+
+      if (!data)
+        return res.status(404).json({ status: "FAIL", msg: "Item not found" });
+
+      return res.status(200).json({ status: "OK", data: data });
+    });
+
+    this.app.get("sort/:id/reverse", async (req, res) => {
+      if (!req.params.id || !req.body.query)
+        return res
+          .status(400)
+          .json({ status: "FAIL", msg: "Insufficient paramester" });
+
+      const data = await this.channelController.getVideoDataSort(
+        req.params.id,
+        req.body.query,
+        true
+      );
+
+      if (!data)
+        return res.status(404).json({ status: "FAIL", msg: "Item not found" });
+
+      return res.status(200).json({ status: "OK", data: data });
     });
   }
 }

@@ -67,7 +67,9 @@ export class MainService {
           : await this.getVideoPerPage(channelId, currentPageTokens);
       currentPageTokens = pageToken;
 
+      console.log({ i, length: videos.length, pageToken });
       videosInfor = [...videosInfor, ...videos];
+      if (!currentPageTokens) break;
     }
     return videosInfor;
   }
@@ -101,6 +103,7 @@ export class MainService {
       return this.clawlService.getVideoInfor(v);
     });
     const videosData = await Promise.all(videosPromise);
+   
     videos = [...videos, ...videosData];
 
     //console.log(videos);

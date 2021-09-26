@@ -1,4 +1,5 @@
 import axios from "axios";
+import fs from "fs";
 import { VideoInfor, VideoJson } from "../type";
 
 export class ClawlService {
@@ -18,17 +19,27 @@ export class ClawlService {
       let html = await axios.get(`https://www.youtube.com/watch?v=${id}`, {
         headers: { cookie: this.cookie },
       });
+
       let content: VideoJson = html.data;
       let respone: VideoJson = this.getJsonVideo(content.toString());
 
-      const likeDislikeText =
-        respone.contents.twoColumnWatchNextResults.results.results.contents[0]
-          .videoPrimaryInfoRenderer.sentimentBar.sentimentBarRenderer.tooltip;
-      const viewText =
-        respone.contents.twoColumnWatchNextResults.results.results.contents[0]
-          .videoPrimaryInfoRenderer.viewCount.videoViewCountRenderer.viewCount
-          .simpleText;
-
+      const likeDislikeText = respone.contents.twoColumnWatchNextResults.results
+        .results.contents[0].videoPrimaryInfoRenderer
+        ? respone.contents.twoColumnWatchNextResults.results.results.contents[0]
+            .videoPrimaryInfoRenderer.sentimentBar.sentimentBarRenderer.tooltip
+        : respone.contents.twoColumnWatchNextResults.results.results.contents[1]
+            .videoPrimaryInfoRenderer.sentimentBar.sentimentBarRenderer.tooltip;
+      const viewText = respone.contents.twoColumnWatchNextResults.results
+        .results.contents[0].videoPrimaryInfoRenderer
+        ? respone.contents.twoColumnWatchNextResults.results.results.contents[0]
+            .videoPrimaryInfoRenderer.viewCount.videoViewCountRenderer.viewCount
+            .simpleText
+        : respone.contents.twoColumnWatchNextResults.results.results.contents[1]
+            .videoPrimaryInfoRenderer.viewCount.videoViewCountRenderer.viewCount
+            .simpleText;
+      if (title === "Số ca mắc, tử vong do COVID-19 liên tục giảm | VTV24") {
+        console.log({ likeDislikeText, viewText });
+      }
       const views =
         viewText.indexOf(",") !== -1
           ? +viewText.split(" ")[0].replace(/\,/g, "")
@@ -45,7 +56,10 @@ export class ClawlService {
       let days = Math.floor(
         Math.abs(new Date().getTime() - new Date(publicAt).getTime()) / 3600000
       );
-
+      // const data = { likeDislikeText, viewText, views, likes, dislikes, days };
+      // console.log({
+      //   title,
+      // });
       return {
         views,
         likes,

@@ -15,7 +15,6 @@ export class YoutubeService {
   }
 
   getKey() {
-    console.log("Get key", this.API_KEYs);
     return this.API_KEYs[Math.floor(Math.random() * this.API_KEYs.length)];
   }
 

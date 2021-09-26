@@ -71,4 +71,21 @@ export class ChannelController {
 
     return newData;
   }
+
+  async getVideoDataSort(
+    id: string,
+    query: "days" | "likes" | "dislikes" | "views",
+    reverse = false
+  ): Promise<IChannel | null> {
+    const data: IChannel = await this.channelService.findChannel({ id });
+    if (!data) return null;
+
+    const videos = data.videoList;
+
+    let sortData = !reverse
+      ? videos.sort((a, b) => b[`${query}`] - a[`${query}`])
+      : videos.sort((a, b) => a[`${query}`] - b[`${query}`]);
+    data.videoList = sortData;
+    return data;
+  }
 }
