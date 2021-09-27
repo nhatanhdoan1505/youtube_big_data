@@ -2,13 +2,11 @@ export interface IChannel {
   label: string;
   urlChannel: string;
   id: string;
-  subscribe: number;
-  views: number;
+  subscribe: string;
+  views: string;
   title: string;
-  numberVideos: number;
-  oldViews: number;
-  oldSubscribe: number;
-  oldNumberVideos: number;
+  numberVideos: string;
+  date: string;
   videoList: [IVideo];
 }
 
@@ -20,6 +18,6 @@ export interface IVideo {
   days: number;
   likes: number;
   dislikes: number;
-  views: number;
-  oldViews: number;
+  views: string;
+  date: string;
 }

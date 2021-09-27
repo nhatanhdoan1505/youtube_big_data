@@ -9,13 +9,11 @@ export default mongoose.model(
     label: { type: String, default: "" },
     urlChannel: { type: String },
     id: { type: String },
-    subscribe: { type: Number, default: 0 },
-    views: { type: Number, default: 0 },
+    subscribe: { type: String, default: "" },
+    views: { type: String, default: "" },
     title: { type: String },
-    numberVideos: { type: Number, default: 0 },
-    oldViews: { type: Number, default: 0 },
-    oldSubscribe: { type: Number, default: 0 },
-    oldNumberVideos: { type: Number, default: 0 },
+    numberVideos: { type: String, default: "" },
+    date: { type: String, default: "" },
     videoList: [
       {
         thumbnail: { type: String },
@@ -25,8 +23,8 @@ export default mongoose.model(
         days: { type: Number, default: 0 },
         likes: { type: Number, default: 0 },
         dislikes: { type: Number, default: 0 },
-        views: { type: Number, default: 0 },
-        oldViews: { type: Number, default: 0 },
+        views: { type: String, default: "" },
+        date: { type: String, default: "" },
       },
     ],
   })

@@ -30,10 +30,11 @@ export class MainService {
       return {
         urlChannel: `https://www.youtube.com/channel/${c.id}`,
         id: c.id,
-        subscribe: +c.statistics.subscriberCount,
-        views: +c.statistics.viewCount,
+        subscribe: c.statistics.subscriberCount,
+        views: c.statistics.viewCount,
         title: c.snippet.title,
-        numberVideos: +c.statistics.videoCount,
+        numberVideos: c.statistics.videoCount,
+        date: new Date().toString(),
       };
     });
 
@@ -45,7 +46,7 @@ export class MainService {
     let channelBasicInfor = await this.getChannelBasicInfor(ids);
 
     for (let c of channelBasicInfor) {
-      let videoList = await this.getVideos(c.id, c.numberVideos);
+      let videoList = await this.getVideos(c.id, +c.numberVideos);
       channelInfor.push({ ...c, videoList });
     }
 
@@ -99,13 +100,14 @@ export class MainService {
           id: v.id.videoId,
           title: v.snippet.title,
           publicAt: v.snippet.publishedAt,
+          date: new Date().toString(),
         };
       });
 
     const videosPromise = videoBacisInfor.map((v) => {
       return this.clawlService.getVideoInfor(v);
     });
-    const videosData = await Promise.all(videosPromise);
+    let videosData = await Promise.all(videosPromise);
 
     videos = [...videos, ...videosData];
 
@@ -149,15 +151,20 @@ export class MainService {
       if (!oldVideos.some((cV: VideoInfor) => cV.id === vid.id))
         newVideos = [...newVideos, vid];
     }
+
     return newVideos;
   }
 
   async updateVideosStatistics(video: VideoInfor) {
-    let oldViews = video.views;
+    let { views, date } = video;
     let newVideoStatistics = await this.clawlService.getVideoInfor(video);
     let newVideoInfor = newVideoStatistics
-      ? { ...newVideoStatistics, oldViews }
-      : { ...video, oldViews, views: -1 };
+      ? {
+          ...newVideoStatistics,
+          views: `${views}|${newVideoStatistics.views}`,
+          date: `${date}|${new Date().toString()}`,
+        }
+      : { ...video, views: `${views}|-1` };
     return newVideoInfor;
   }
 
@@ -190,36 +197,42 @@ export class MainService {
 
     let updateChannelStatistics = newChannelInfor.map((p) => {
       let oldChannelStatistics = data.find((c) => c.id === p.id);
-      let { views, subscribe, numberVideos } = oldChannelStatistics;
-      let oldViews = views;
-      let oldSubscribe = subscribe;
-      let oldNumberVideos = numberVideos;
+      let { views, subscribe, numberVideos, date } = oldChannelStatistics;
 
       return {
         ...oldChannelStatistics,
-        oldViews,
-        oldSubscribe,
-        oldNumberVideos,
+        views: `${views}|${p.views}`,
+        subscribe: `${subscribe}|${p.subscribe}`,
+        numberVideos: `${numberVideos}|${p.numberVideos}`,
+        date: `${date}|${new Date().toString()}`,
       };
     });
 
     for (let channel of data) {
       const idChannel: string = channel.id;
+
       const oldVideos = channel.videoList.filter((v) => v !== null);
-      const newVideos = await this.scanNewVideos(oldVideos, idChannel);
       let updateVideosStatisticsPromise = oldVideos.map((v) =>
         this.updateVideosStatistics(v)
       );
-
       let updateVideosStatistics = await Promise.all(
         updateVideosStatisticsPromise
       );
 
+      let newVideos = await this.scanNewVideos(oldVideos, idChannel);
+      newVideos = newVideos.map((v) => {
+        return { ...v, date: new Date().toString() };
+      });
+
       let channelNewInfor = updateChannelStatistics.find(
         (c) => c.id === channel.id
       );
+
+      newData.push({
+        ...channelNewInfor,
+        videoList: [...updateVideosStatistics, ...newVideos],
+      });
       console.log("done");
-      newData.push({ ...channelNewInfor, videoList: updateVideosStatistics });
     }
 
     return newData;

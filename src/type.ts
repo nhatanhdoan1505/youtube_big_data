@@ -1,10 +1,10 @@
 export interface ChannelInfor {
   urlChannel: string;
   id: string;
-  subscribe: number;
-  views: number;
+  subscribe: string;
+  views: string;
   title: string;
-  numberVideos: number;
+  numberVideos: string;
   videoList: VideoInfor[];
 }
 
@@ -14,12 +14,13 @@ export interface VideoInfor extends VideoStatistics {
   title: string;
   publicAt: string;
   days: number;
+  date: string;
 }
 
 export interface VideoStatistics {
   likes: number;
   dislikes: number;
-  views: number;
+  views: string;
 }
 
 // Json from youtube/wacth
