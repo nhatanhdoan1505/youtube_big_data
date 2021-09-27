@@ -39,9 +39,7 @@ export class ClawlService {
         : respone.contents.twoColumnWatchNextResults.results.results.contents[1]
             .videoPrimaryInfoRenderer.viewCount.videoViewCountRenderer.viewCount
             .simpleText;
-      if (title === "Số ca mắc, tử vong do COVID-19 liên tục giảm | VTV24") {
-        console.log({ likeDislikeText, viewText });
-      }
+     
       const views =
         viewText.indexOf(",") !== -1
           ? viewText.split(" ")[0].replace(/\,/g, "")
@@ -58,10 +56,7 @@ export class ClawlService {
       let days = Math.floor(
         Math.abs(new Date().getTime() - new Date(publicAt).getTime()) / 3600000
       );
-      // const data = { likeDislikeText, viewText, views, likes, dislikes, days };
-      // console.log({
-      //   title,
-      // });
+      
       return {
         views,
         likes,

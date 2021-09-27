@@ -11,7 +11,7 @@ export class CronJob {
   }
 
   updateChannelStatistics() {
-    return schedule("0 */3 * * *", async () => {
+    return schedule("0 */24 * * *", async () => {
       const newData = await this.mainService.scanOldChannelInfor();
       const updateDataPromise = newData.map((c) =>
         this.channelService.updateChannel({ id: c.id }, c)

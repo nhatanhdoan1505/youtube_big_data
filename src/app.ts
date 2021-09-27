@@ -38,7 +38,7 @@ const main = async () => {
   router.route();
 
   const cronJob = new CronJob(mainService);
-  //cronJob.updateChannelStatistics();
+  cronJob.updateChannelStatistics();
 
   const port = process.env.PORT || 3000;
   app.listen(port, () => console.log(`Server is listenning at port ${port}`));
