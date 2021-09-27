@@ -9,6 +9,7 @@ import { Router } from "./router";
 import { connectMongo } from "./mongo";
 import dotenv = require("dotenv");
 import { ChannelController } from "./controller/ChannelController";
+import { UserController } from "./controller/UserController";
 import { CronJob } from "./cronJob";
 
 dotenv.config();
@@ -23,8 +24,9 @@ const main = async () => {
   );
   const mainService = new MainService(clawlService, youtubeService);
   const channelController = new ChannelController(mainService);
+  const userController = new UserController();
 
-  const router = new Router(app, channelController);
+  const router = new Router(app, channelController, userController);
 
   await connectMongo();
 
@@ -35,7 +37,7 @@ const main = async () => {
 
   router.route();
 
-  const cronJob = new CronJob(channelController);
+  const cronJob = new CronJob(mainService);
   //cronJob.updateChannelStatistics();
 
   const port = process.env.PORT || 3000;

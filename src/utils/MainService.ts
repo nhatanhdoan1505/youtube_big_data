@@ -1,3 +1,5 @@
+import { IChannel } from "../models/channel/type";
+import { ChannelService } from "../models/channel/service";
 import {
   ChannelInfor,
   ChannelInfroApi,
@@ -10,6 +12,7 @@ import { YoutubeService } from "./YoutubeSevice";
 export class MainService {
   private clawlService: ClawlService;
   private youtubeService: YoutubeService;
+  private channelService: ChannelService = new ChannelService();
 
   constructor(clawlService: ClawlService, youtubeService: YoutubeService) {
     this.clawlService = clawlService;
@@ -103,7 +106,7 @@ export class MainService {
       return this.clawlService.getVideoInfor(v);
     });
     const videosData = await Promise.all(videosPromise);
-   
+
     videos = [...videos, ...videosData];
 
     //console.log(videos);
@@ -176,5 +179,49 @@ export class MainService {
       oldNumberVideos,
       oldSubscribe,
     };
+  }
+
+  async scanOldChannelInfor() {
+    let newData = [];
+
+    const data = await this.channelService.filterChannel({});
+    const channelIds = data.map((d) => d.id);
+    let newChannelInfor = await this.getChannelBasicInfor(channelIds);
+
+    let updateChannelStatistics = newChannelInfor.map((p) => {
+      let oldChannelStatistics = data.find((c) => c.id === p.id);
+      let { views, subscribe, numberVideos } = oldChannelStatistics;
+      let oldViews = views;
+      let oldSubscribe = subscribe;
+      let oldNumberVideos = numberVideos;
+
+      return {
+        ...oldChannelStatistics,
+        oldViews,
+        oldSubscribe,
+        oldNumberVideos,
+      };
+    });
+
+    for (let channel of data) {
+      const idChannel: string = channel.id;
+      const oldVideos = channel.videoList.filter((v) => v !== null);
+      const newVideos = await this.scanNewVideos(oldVideos, idChannel);
+      let updateVideosStatisticsPromise = oldVideos.map((v) =>
+        this.updateVideosStatistics(v)
+      );
+
+      let updateVideosStatistics = await Promise.all(
+        updateVideosStatisticsPromise
+      );
+
+      let channelNewInfor = updateChannelStatistics.find(
+        (c) => c.id === channel.id
+      );
+      console.log("done");
+      newData.push({ ...channelNewInfor, videoList: updateVideosStatistics });
+    }
+
+    return newData;
   }
 }

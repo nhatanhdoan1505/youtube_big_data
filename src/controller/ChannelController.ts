@@ -1,5 +1,4 @@
 import { MainService } from "../utils/MainService";
-import { ChannelInfor } from "../type";
 import { ChannelService } from "../models/channel/service";
 import { IChannel } from "models/channel/type";
 
@@ -11,81 +10,81 @@ export class ChannelController {
     this.mainService = mainService;
   }
 
-  async getVideosOfChannel(
-    listUrl: string[],
-    label: string
-  ): Promise<ChannelInfor[]> {
+  async getVideosOfChannel(req, res) {
+    const listUrl: string[] = req.body.url
+      .split(",")
+      .map((url) => url.replace("//", ""))
+      .map((url) => url.split("/"))
+      .map((url) => url[url.length - 1]);
+
+    const label = req.body.label;
     let channelData = await this.mainService.getChannel(listUrl);
     channelData = channelData.map((c) => {
       return { ...c, label };
     });
 
-    return channelData;
-  }
-
-  async scanOldChannelInfor(): Promise<IChannel[]> {
-    let newData = [];
-
-    const data = await this.channelService.filterChannel({});
-    const channelIds = data.map((d) => d.id);
-    let newChannelInfor = await this.mainService.getChannelBasicInfor(
-      channelIds
+    const saveDataPromise = channelData.map((c: IChannel) =>
+      this.channelService.createChannel(c)
     );
+    await Promise.all(saveDataPromise);
 
-    let updateChannelStatistics = newChannelInfor.map((p) => {
-      let oldChannelStatistics = data.find((c) => c.id === p.id);
-      let { views, subscribe, numberVideos } = oldChannelStatistics;
-      let oldViews = views;
-      let oldSubscribe = subscribe;
-      let oldNumberVideos = numberVideos;
-
-      return {
-        ...oldChannelStatistics,
-        oldViews,
-        oldSubscribe,
-        oldNumberVideos,
-      };
-    });
-
-    for (let channel of data) {
-      const idChannel: string = channel.id;
-      const oldVideos = channel.videoList.filter((v) => v !== null);
-      const newVideos = await this.mainService.scanNewVideos(
-        oldVideos,
-        idChannel
-      );
-      let updateVideosStatisticsPromise = oldVideos.map((v) =>
-        this.mainService.updateVideosStatistics(v)
-      );
-
-      let updateVideosStatistics = await Promise.all(
-        updateVideosStatisticsPromise
-      );
-
-      let channelNewInfor = updateChannelStatistics.find(
-        (c) => c.id === channel.id
-      );
-      console.log("done");
-      newData.push({ ...channelNewInfor, videoList: updateVideosStatistics });
-    }
-
-    return newData;
+    return res.status(200).json({ status: "OK", data: channelData });
   }
 
-  async getVideoDataSort(
-    id: string,
-    query: "days" | "likes" | "dislikes" | "views",
-    reverse = false
-  ): Promise<IChannel | null> {
-    const data: IChannel = await this.channelService.findChannel({ id });
+  async scanOldChannelInfor(req, res) {
+    const newData: IChannel[] = await this.mainService.scanOldChannelInfor();
+    const updateChannelPromise = newData.map((c) =>
+      this.channelService.updateChannel({ id: c.id }, c)
+    );
+    await Promise.all(updateChannelPromise);
+    return res.status(200).json({ status: "OK", data: newData });
+  }
+
+  async getVideoDataSort(req, res) {
+    if (!req.params.id || !req.body.query)
+      return res
+        .status(400)
+        .json({ status: "FAIL", msg: "Insufficient paramester" });
+
+    const data: IChannel = await this.channelService.findChannel({
+      id: req.params.id,
+    });
     if (!data) return null;
 
     const videos = data.videoList;
 
-    let sortData = !reverse
-      ? videos.sort((a, b) => b[`${query}`] - a[`${query}`])
-      : videos.sort((a, b) => a[`${query}`] - b[`${query}`]);
+    let sortData = videos.sort(
+      (a, b) => b[`${req.body.query}`] - a[`${req.body.query}`]
+    );
     data.videoList = sortData;
-    return data;
+
+    if (!data)
+      return res.status(404).json({ status: "FAIL", msg: "Item not found" });
+
+    return res.status(200).json({ status: "OK", data: data });
+  }
+
+  async getVideoDataSortReverse(req, res) {
+    if (!req.params.id || !req.body.query)
+      return res
+        .status(400)
+        .json({ status: "FAIL", msg: "Insufficient paramester" });
+
+    const data: IChannel = await this.channelService.findChannel({
+      id: req.params.id,
+    });
+    if (!data) return null;
+
+    const videos = data.videoList;
+
+    let sortData = videos.sort(
+      (a, b) => a[`${req.body.query}`] - b[`${req.body.query}`]
+    );
+    data.videoList = sortData;
+
+    if (!data)
+      return res.status(404).json({ status: "FAIL", msg: "Item not found" });
+
+    return res.status(200).json({ status: "OK", data: data });
   }
 }
