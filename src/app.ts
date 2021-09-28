@@ -17,12 +17,8 @@ dotenv.config();
 const main = async () => {
   const app = express();
 
-  const clawlService = new ClawlService();
-  const youtubeService = new YoutubeService(
-    process.env.API_KEY.split(","),
-    clawlService
-  );
-  const mainService = new MainService(clawlService, youtubeService);
+  const youtubeService = new YoutubeService(process.env.API_KEY.split(","));
+  const mainService = new MainService(youtubeService);
   const channelController = new ChannelController(mainService);
   const userController = new UserController();
 
@@ -39,6 +35,7 @@ const main = async () => {
 
   const cronJob = new CronJob(mainService);
   cronJob.updateChannelStatistics();
+  cronJob.resetApiKey();
 
   const port = process.env.PORT || 3000;
   app.listen(port, () => console.log(`Server is listenning at port ${port}`));

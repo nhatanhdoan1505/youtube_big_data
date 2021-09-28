@@ -1,22 +1,23 @@
-import { IChannel } from "../models/channel/type";
 import { ChannelService } from "../models/channel/service";
 import {
   ChannelInfor,
   ChannelInfroApi,
   VideoFromApi,
   VideoInfor,
+  VideoStatisticsApi,
 } from "../type";
-import { ClawlService } from "./ClawlService";
 import { YoutubeService } from "./YoutubeSevice";
 
 export class MainService {
-  private clawlService: ClawlService;
   private youtubeService: YoutubeService;
   private channelService: ChannelService = new ChannelService();
 
-  constructor(clawlService: ClawlService, youtubeService: YoutubeService) {
-    this.clawlService = clawlService;
+  constructor(youtubeService: YoutubeService) {
     this.youtubeService = youtubeService;
+  }
+
+  resetApiKey() {
+    return this.youtubeService.resetApiKey();
   }
 
   async getChannelBasicInfor(ids: string[]) {
@@ -46,25 +47,18 @@ export class MainService {
     let channelBasicInfor = await this.getChannelBasicInfor(ids);
 
     for (let c of channelBasicInfor) {
-      let videoList = await this.getVideos(c.id, +c.numberVideos);
+      let videoList = await this.getVideos(c.id);
       channelInfor.push({ ...c, videoList });
     }
 
     return channelInfor;
   }
 
-  async getVideos(channelId: string, numberVideos: number) {
+  async getVideos(channelId: string) {
     let videosInfor: VideoInfor[] = [];
-
-    let round =
-      numberVideos <= 50
-        ? 1
-        : numberVideos % 50 !== 0
-        ? Math.trunc(numberVideos / 50) + 1
-        : Math.trunc(numberVideos);
-
     let currentPageTokens = "";
-    for (let i = 0; i < round; i++) {
+    let i = 0;
+    while (currentPageTokens !== undefined) {
       let { videos, pageToken } =
         i === 0
           ? await this.getVideoPerPage(channelId)
@@ -73,7 +67,7 @@ export class MainService {
 
       console.log({ i, length: videos.length, pageToken });
       videosInfor = [...videosInfor, ...videos];
-      if (!currentPageTokens) break;
+      i += 1;
     }
     return videosInfor;
   }
@@ -82,8 +76,6 @@ export class MainService {
     channelId: string,
     pageToken = ""
   ): Promise<{ videos: VideoInfor[]; pageToken: string }> {
-    let videos: VideoInfor[] = [];
-
     const videosFromApiRes =
       pageToken === ""
         ? await this.youtubeService.queryVideoSnippet(channelId)
@@ -92,7 +84,7 @@ export class MainService {
     const videosFromApi: VideoFromApi = videosFromApiRes.data;
 
     pageToken = videosFromApi.nextPageToken;
-    const videoBacisInfor = videosFromApi.items
+    const videoBasicInfor = videosFromApi.items
       .filter((v) => v.id.videoId)
       .map((v) => {
         return {
@@ -104,15 +96,53 @@ export class MainService {
         };
       });
 
-    const videosPromise = videoBacisInfor.map((v) => {
-      return this.clawlService.getVideoInfor(v);
-    });
-    let videosData = await Promise.all(videosPromise);
-
-    videos = [...videos, ...videosData];
-
-    //console.log(videos);
+    let videos = await this.getVideoFullInfor(videoBasicInfor);
     return { videos, pageToken };
+  }
+
+  async getVideoFullInfor(
+    videoBasicInfor: {
+      thumbnail: string;
+      id: string;
+      title: string;
+      publicAt: string;
+      date: string;
+    }[]
+  ): Promise<VideoInfor[]> {
+    let idEndpoint = videoBasicInfor
+      .map((v) => v.id)
+      .map((id) => `&id=${id}`)
+      .join("");
+    const videoStatisticsApiRes =
+      await this.youtubeService.queryVideoStatistics(idEndpoint);
+
+    const videoStatisticsFromApi: VideoStatisticsApi =
+      videoStatisticsApiRes.data;
+    const videosData: VideoInfor[] = videoBasicInfor.map((vBasic) => {
+      let videoStatistic: { likes: number; dislikes: number; views: string } = {
+        likes: -1,
+        dislikes: -1,
+        views: "",
+      };
+      const video = videoStatisticsFromApi.items.find(
+        (vStatistics) => vStatistics.id === vStatistics.id
+      );
+      videoStatistic = {
+        likes: +video.statistics.likeCount,
+        dislikes: +video.statistics.dislikeCount,
+        views: video.statistics.viewCount,
+      };
+      return {
+        ...vBasic,
+        ...videoStatistic,
+        days: Math.floor(
+          Math.abs(new Date().getTime() - new Date(vBasic.publicAt).getTime()) /
+            3600000
+        ),
+      };
+    });
+
+    return videosData;
   }
 
   async scanNewVideos(
@@ -155,16 +185,23 @@ export class MainService {
     return newVideos;
   }
 
-  async updateVideosStatistics(video: VideoInfor) {
-    let { views, date } = video;
-    let newVideoStatistics = await this.clawlService.getVideoInfor(video);
-    let newVideoInfor = newVideoStatistics
-      ? {
-          ...newVideoStatistics,
-          views: `${views}|${newVideoStatistics.views}`,
-          date: `${date}|${new Date().toString()}`,
-        }
-      : { ...video, views: `${views}|-1` };
+  async updateVideosStatistics(videos: VideoInfor[]) {
+    const newVideoStatistics: VideoInfor[] = await this.getVideoFullInfor(
+      videos
+    );
+    const newVideoInfor = videos.map((oldV) => {
+      let { views, date } = oldV;
+      let video = newVideoStatistics.find((v) => v.id === oldV.id);
+      return {
+        ...oldV,
+        likes: video.likes,
+        dislikes: video.dislikes,
+        days: video.days,
+        views: `${views}|${video.views}`,
+        date: `${date}|${new Date().toString()}`,
+      };
+    });
+
     return newVideoInfor;
   }
 
@@ -212,12 +249,7 @@ export class MainService {
       const idChannel: string = channel.id;
 
       const oldVideos = channel.videoList.filter((v) => v !== null);
-      let updateVideosStatisticsPromise = oldVideos.map((v) =>
-        this.updateVideosStatistics(v)
-      );
-      let updateVideosStatistics = await Promise.all(
-        updateVideosStatisticsPromise
-      );
+      let updateVideosStatistics = await this.updateVideosStatistics(oldVideos);
 
       let newVideos = await this.scanNewVideos(oldVideos, idChannel);
       newVideos = newVideos.map((v) => {

@@ -19,4 +19,8 @@ export class CronJob {
       return Promise.all(updateDataPromise);
     });
   }
+
+  resetApiKey() {
+    return schedule("0 */50 * * *", () => this.mainService.resetApiKey());
+  }
 }

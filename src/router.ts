@@ -1,5 +1,3 @@
-import { MainService } from "./utils/MainService";
-import { ChannelService } from "./models/channel/service";
 import { ChannelController } from "./controller/ChannelController";
 import { UserController } from "controller/UserController";
 
@@ -39,12 +37,20 @@ export class Router {
       return this.channelController.scanOldChannelInfor(req, res);
     });
 
-    this.app.get("/api/service/sort/:id", (req, res) => {
+    this.app.get("/api/channel/sort/:id", (req, res) => {
       return this.channelController.getVideoDataSort(req, res);
     });
 
-    this.app.get("/api/service/sort/:id/reverse", (req, res) => {
+    this.app.get("/api/channel/sort/:id/reverse", (req, res) => {
       return this.channelController.getVideoDataSortReverse(req, res);
+    });
+
+    this.app.get("/api/channel/label", (req, res) => {
+      return this.channelController.getChannelFromDBByLabel(req, res);
+    });
+
+    this.app.get("/api/channel/id", (req, res) => {
+      return this.channelController.getChannelFromDBById(req, res);
     });
   }
 }

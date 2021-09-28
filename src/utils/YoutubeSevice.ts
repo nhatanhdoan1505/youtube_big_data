@@ -3,11 +3,15 @@ import { ClawlService } from "./ClawlService";
 
 export class YoutubeService {
   private API_KEYs: string[] = [];
-  clawlService: ClawlService;
+  private INITIAL_KEY: string[] = [];
 
-  constructor(API_KEYs: string[], clawlService: ClawlService) {
+  constructor(API_KEYs: string[]) {
     this.API_KEYs = [...API_KEYs];
-    this.clawlService = clawlService;
+    this.INITIAL_KEY = [...API_KEYs];
+  }
+
+  resetApiKey() {
+    this.API_KEYs = this.INITIAL_KEY;
   }
 
   removeExpiredKey(key: string) {
@@ -49,6 +53,19 @@ export class YoutubeService {
         ? `https://youtube.googleapis.com/youtube/v3/search?part=snippet&channelId=${channelId}&maxResults=50&order=date&key=${apiKey}`
         : `https://youtube.googleapis.com/youtube/v3/search?part=snippet&channelId=${channelId}&pageToken=${pageToken}&maxResults=50&order=date&key=${apiKey}`;
 
+      return await axios.get(url);
+    }
+  }
+
+  async queryVideoStatistics(idEndpoint: string) {
+    let apiKey = this.getKey();
+    let url = `https://youtube.googleapis.com/youtube/v3/videos?part=statistics${idEndpoint}&key=${apiKey}`;
+    try {
+      return await axios.get(url);
+    } catch (error) {
+      this.removeExpiredKey(apiKey);
+      apiKey = this.getKey();
+      url = `https://youtube.googleapis.com/youtube/v3/videos?part=statistics${idEndpoint}&key=${apiKey}`;
       return await axios.get(url);
     }
   }

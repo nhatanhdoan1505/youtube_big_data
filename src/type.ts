@@ -23,6 +23,31 @@ export interface VideoStatistics {
   views: string;
 }
 
+//Video statistics Api
+export interface VideoStatisticsApi {
+  kind: string;
+  etag: string;
+  items?: ItemsEntity[] | null;
+  pageInfo: PageInfo;
+}
+export interface ItemsEntity {
+  kind: string;
+  etag: string;
+  id: string;
+  statistics: Statistics;
+}
+export interface Statistics {
+  viewCount: string;
+  likeCount: string;
+  dislikeCount: string;
+  favoriteCount: string;
+  commentCount: string;
+}
+export interface PageInfo {
+  totalResults: number;
+  resultsPerPage: number;
+}
+
 // Json from youtube/wacth
 
 export interface VideoJson {

@@ -10,12 +10,41 @@ export class ChannelController {
     this.mainService = mainService;
   }
 
+  async getChannelFromDBByLabel(req, res) {
+    if (!req.body.label)
+      return res
+        .status(400)
+        .json({ status: "FAIL", msg: "Insuffient paramester" });
+    const channelData = await this.channelService.filterChannel({
+      label: req.body.label,
+    });
+    return res.status(200).json({ status: "OK", data: channelData });
+  }
+
+  async getChannelFromDBById(req, res) {
+    if (!req.body.id)
+      return res
+        .status(400)
+        .json({ status: "FAIL", msg: "Insuffient paramester" });
+    const channelData = await this.channelService.findChannel({
+      id: req.body.id,
+    });
+    return res.status(200).json({ status: "OK", data: channelData });
+  }
+
   async getVideosOfChannel(req, res) {
-    const listUrl: string[] = req.body.url
+    let existChannel = (await this.channelService.filterChannel({})).map(
+      (c) => c.id
+    );
+    let listUrl: string[] = req.body.url
       .split(",")
       .map((url) => url.replace("//", ""))
       .map((url) => url.split("/"))
       .map((url) => url[url.length - 1]);
+    listUrl = listUrl.filter((u) => !existChannel.some((i) => i === u));
+
+    if (listUrl.length === 0)
+      return res.status(200).json({ status: "OK", data: [] });
 
     const label = req.body.label;
     let channelData = await this.mainService.getChannel(listUrl);
