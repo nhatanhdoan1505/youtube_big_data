@@ -14,6 +14,7 @@ export default mongoose.model(
     title: { type: String },
     numberVideos: { type: String, default: "" },
     date: { type: String, default: "" },
+    channelThumnail: { type: String },
     videoList: [
       {
         thumbnail: { type: String },

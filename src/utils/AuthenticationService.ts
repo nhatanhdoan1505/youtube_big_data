@@ -1,12 +1,12 @@
 import { UserService } from "../models/user/service";
 import { createTransport } from "nodemailer";
-import { sign, verify } from "jsonwebtoken";
+import { JwtPayload, sign, verify } from "jsonwebtoken";
 import { secret } from "../config";
 import { hash, compareSync } from "bcrypt";
 
 export class AuthenticationService {
   private userService: UserService = new UserService();
-
+  
   async checkExistEmail(email: string): Promise<boolean> {
     let user = await this.userService.findUser({ email });
 

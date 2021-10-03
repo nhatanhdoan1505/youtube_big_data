@@ -7,6 +7,7 @@ export interface IChannel {
   title: string;
   numberVideos: string;
   date: string;
+  channelThumnail: string;
   videoList: [IVideo];
 }
 

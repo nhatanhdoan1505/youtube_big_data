@@ -27,7 +27,7 @@ const main = async () => {
   await connectMongo();
 
   app.use(express.static(path.join(__dirname)));
-  app.use(cors());
+  app.use(cors("*"));
   app.use(express.json());
   app.use(bodyParser.urlencoded({ extended: false }));
 

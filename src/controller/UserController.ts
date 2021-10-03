@@ -26,7 +26,7 @@ export class UserController {
 
     const verifiedCode = Math.floor(Math.random() * 10000);
     const bcryptPassword = await this.authService.bcryptPassword(
-      req.body.email
+      req.body.password
     );
     await Promise.all([
       this.authService.sendEmail(req.body.email, verifiedCode.toString()),
@@ -101,5 +101,26 @@ export class UserController {
     return res
       .status(200)
       .json({ status: "SUCCESS", msg: "Login successfully", data: { token } });
+  }
+
+  async isAdmin(req, res) {
+    if (!req.body.token)
+      return res
+        .status(400)
+        .json({ status: "Fail", msg: "Insufficient paramester" });
+        
+    try {
+      const decodeToken: any = await this.authService.verifyToken(
+        req.body.token
+      );
+      const { _id } = decodeToken;
+      const userData = await this.userService.findUser({ _id });
+
+      if (!userData && !userData.isAdmin)
+        return res.status(200).json({ status: "OK", data: { isAdmin: false } });
+      return res.status(200).json({ status: "OK", data: { isAdmin: true } });
+    } catch (error) {
+      return res.status(200).json({ status: "OK", data: { isAdmin: false } });
+    }
   }
 }

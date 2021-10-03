@@ -1,6 +1,7 @@
 import { MainService } from "../utils/MainService";
 import { ChannelService } from "../models/channel/service";
 import { IChannel } from "models/channel/type";
+import { data } from "cheerio/lib/api/attributes";
 
 export class ChannelController {
   private mainService: MainService;
@@ -8,6 +9,21 @@ export class ChannelController {
 
   constructor(mainService: MainService) {
     this.mainService = mainService;
+  }
+
+  async deleteChannel(req, res) {
+    if (!req.params.id)
+      return res.status(400).json({ status: "FAIL", msg: "Insufficient" });
+    this.channelService.deleteChannel({ id: req.params.id });
+    const channelData = await this.channelService.filterChannel({});
+    return res
+      .status(200)
+      .json({ status: "OK", msg: "Delete Successfully", data: channelData });
+  }
+
+  async getAllChannels(req, res) {
+    const channels = await this.channelService.filterChannel({});
+    return res.status(200).json({ status: "OK", data: channels });
   }
 
   async getChannelFromDBByLabel(req, res) {

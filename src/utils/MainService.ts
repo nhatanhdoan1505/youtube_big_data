@@ -35,6 +35,7 @@ export class MainService {
         views: c.statistics.viewCount,
         title: c.snippet.title,
         numberVideos: c.statistics.videoCount,
+        channelThumnail: c.snippet.thumbnails.high.url,
         date: new Date().toString(),
       };
     });
@@ -125,7 +126,7 @@ export class MainService {
         views: "",
       };
       const video = videoStatisticsFromApi.items.find(
-        (vStatistics) => vStatistics.id === vStatistics.id
+        (vStatistics) => vBasic.id === vStatistics.id
       );
       videoStatistic = {
         likes: +video.statistics.likeCount,
@@ -137,7 +138,7 @@ export class MainService {
         ...videoStatistic,
         days: Math.floor(
           Math.abs(new Date().getTime() - new Date(vBasic.publicAt).getTime()) /
-            3600000
+            86400000
         ),
       };
     });
