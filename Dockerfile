@@ -10,4 +10,4 @@ WORKDIR /app
 
 ADD . /app
 
-EXPOSE 5000
+EXPOSE 8080
