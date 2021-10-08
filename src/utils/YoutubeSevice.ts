@@ -63,6 +63,7 @@ export class YoutubeService {
     try {
       return await axios.get(url);
     } catch (error) {
+      console.log(error.response.data.error.errors);
       this.removeExpiredKey(apiKey);
       apiKey = this.getKey();
       url = `https://youtube.googleapis.com/youtube/v3/videos?part=statistics${idEndpoint}&key=${apiKey}`;

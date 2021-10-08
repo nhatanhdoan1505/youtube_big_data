@@ -110,22 +110,34 @@ export class MainService {
       date: string;
     }[]
   ): Promise<VideoInfor[]> {
-    let idEndpoint = videoBasicInfor
-      .map((v) => v.id)
-      .map((id) => `&id=${id}`)
-      .join("");
-    const videoStatisticsApiRes =
-      await this.youtubeService.queryVideoStatistics(idEndpoint);
+    let videosFromApi: VideoStatisticsApi[] = [];
+    let idEndpoint = videoBasicInfor.map((v) => v.id);
+    let index = 0;
+    while (index < idEndpoint.length) {
+      console.log(index);
+      let endPoint = idEndpoint
+        .slice(index, index + 50)
+        .map((id) => `&id=${id}`)
+        .join("");
+      const videoStatisticsApiRes =
+        await this.youtubeService.queryVideoStatistics(endPoint);
+      const videoStatisticsFromApi: VideoStatisticsApi =
+        videoStatisticsApiRes.data;
+      videosFromApi = [...videosFromApi, videoStatisticsFromApi];
+      index += 50;
+    }
 
-    const videoStatisticsFromApi: VideoStatisticsApi =
-      videoStatisticsApiRes.data;
+    let videosStatistic = videosFromApi
+      .map((v) => v.items)
+      .reduce((pre, next) => pre.concat(next), []);
+
     const videosData: VideoInfor[] = videoBasicInfor.map((vBasic) => {
       let videoStatistic: { likes: number; dislikes: number; views: string } = {
         likes: -1,
         dislikes: -1,
         views: "",
       };
-      const video = videoStatisticsFromApi.items.find(
+      const video = videosStatistic.find(
         (vStatistics) => vBasic.id === vStatistics.id
       );
       videoStatistic = {
@@ -190,6 +202,8 @@ export class MainService {
     const newVideoStatistics: VideoInfor[] = await this.getVideoFullInfor(
       videos
     );
+
+    console.log(newVideoStatistics);
     const newVideoInfor = videos.map((oldV) => {
       let { views, date } = oldV;
       let video = newVideoStatistics.find((v) => v.id === oldV.id);
@@ -202,7 +216,6 @@ export class MainService {
         date: `${date}|${new Date().toString()}`,
       };
     });
-
     return newVideoInfor;
   }
 
@@ -252,11 +265,15 @@ export class MainService {
       const oldVideos = channel.videoList.filter((v) => v !== null);
       let updateVideosStatistics = await this.updateVideosStatistics(oldVideos);
 
+      console.log("Done for old video");
+
       let newVideos = await this.scanNewVideos(oldVideos, idChannel);
       newVideos = newVideos.map((v) => {
         return { ...v, date: new Date().toString() };
       });
 
+      console.log("Done for new video");
+      
       let channelNewInfor = updateChannelStatistics.find(
         (c) => c.id === channel.id
       );
