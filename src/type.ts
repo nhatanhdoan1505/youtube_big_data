@@ -18,8 +18,8 @@ export interface VideoInfor extends VideoStatistics {
 }
 
 export interface VideoStatistics {
-  likes: number;
-  dislikes: number;
+  likes: string;
+  dislikes: string;
   views: string;
 }
 

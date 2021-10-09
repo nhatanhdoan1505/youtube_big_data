@@ -17,8 +17,8 @@ export interface IVideo {
   title: string;
   publicAt: string;
   days: number;
-  likes: number;
-  dislikes: number;
+  likes: string;
+  dislikes: string;
   views: string;
   date: string;
 }

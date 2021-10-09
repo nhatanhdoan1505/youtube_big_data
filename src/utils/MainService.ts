@@ -4,6 +4,7 @@ import {
   ChannelInfroApi,
   VideoFromApi,
   VideoInfor,
+  VideoStatistics,
   VideoStatisticsApi,
 } from "../type";
 import { YoutubeService } from "./YoutubeSevice";
@@ -132,17 +133,17 @@ export class MainService {
       .reduce((pre, next) => pre.concat(next), []);
 
     const videosData: VideoInfor[] = videoBasicInfor.map((vBasic) => {
-      let videoStatistic: { likes: number; dislikes: number; views: string } = {
-        likes: -1,
-        dislikes: -1,
+      let videoStatistic: VideoStatistics = {
+        likes: "-1",
+        dislikes: "-1",
         views: "",
       };
       const video = videosStatistic.find(
         (vStatistics) => vBasic.id === vStatistics.id
       );
       videoStatistic = {
-        likes: +video.statistics.likeCount,
-        dislikes: +video.statistics.dislikeCount,
+        likes: video.statistics.likeCount,
+        dislikes: video.statistics.dislikeCount,
         views: video.statistics.viewCount,
       };
       return {
@@ -219,26 +220,6 @@ export class MainService {
     return newVideoInfor;
   }
 
-  async updateChannelStatistics(channelInfor: {
-    urlChannel: string;
-    id: string;
-    subscribe: number;
-    views: number;
-    title: string;
-    numberVideos: number;
-  }) {
-    let oldViews = channelInfor.views;
-    let oldSubscribe = channelInfor.subscribe;
-    let oldNumberVideos = channelInfor.numberVideos;
-
-    return {
-      ...channelInfor,
-      oldViews,
-      oldNumberVideos,
-      oldSubscribe,
-    };
-  }
-
   async scanOldChannelInfor() {
     let newData = [];
 
@@ -273,7 +254,7 @@ export class MainService {
       });
 
       console.log("Done for new video");
-      
+
       let channelNewInfor = updateChannelStatistics.find(
         (c) => c.id === channel.id
       );
