@@ -10,13 +10,15 @@ import dotenv = require("dotenv");
 import { ChannelController } from "./controller/ChannelController";
 import { UserController } from "./controller/UserController";
 import { CronJob } from "./cronJob";
+import fs from "fs";
 
 dotenv.config();
 
 const main = async () => {
   const app = express();
 
-  const youtubeService = new YoutubeService(process.env.API_KEY.split(","));
+  const apiKey = fs.readFileSync("apiKey.txt", { encoding: "utf-8" });
+  const youtubeService = new YoutubeService(apiKey.split(/\n/));
   const mainService = new MainService(youtubeService);
   const channelController = new ChannelController(mainService);
   const userController = new UserController();
@@ -35,7 +37,6 @@ const main = async () => {
   const cronJob = new CronJob(mainService);
   cronJob.updateChannelStatistics();
   cronJob.resetApiKey();
-
   const port = process.env.PORT || 8080;
   app.listen(port, () => console.log(`Server is listenning at port ${port}`));
 };
