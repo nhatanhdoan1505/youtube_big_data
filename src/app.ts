@@ -2,7 +2,6 @@ import express from "express";
 import path = require("path");
 import cors from "cors";
 import * as bodyParser from "body-parser";
-import { ClawlService } from "./utils/ClawlService";
 import { YoutubeService } from "./utils/YoutubeSevice";
 import { MainService } from "./utils/MainService";
 import { Router } from "./router";
