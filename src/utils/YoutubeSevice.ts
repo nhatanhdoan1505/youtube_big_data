@@ -9,6 +9,10 @@ export class YoutubeService {
     this.INITIAL_KEY = [...API_KEYs];
   }
 
+  getAllKey() {
+    return this.API_KEYs;
+  }
+
   resetApiKey() {
     this.API_KEYs = this.INITIAL_KEY;
   }

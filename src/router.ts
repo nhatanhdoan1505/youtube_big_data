@@ -64,5 +64,9 @@ export class Router {
     this.app.delete("/api/channel/:id", (req, res) => {
       return this.channelController.deleteChannel(req, res);
     });
+
+    this.app.get("/api/service/key", (req, res) => {
+      return this.channelController.getApiKey(req, res);
+    });
   }
 }

@@ -11,6 +11,13 @@ export class ChannelController {
     this.mainService = mainService;
   }
 
+  async getApiKey(req, res) {
+    const apiKey = this.mainService.getAllKey();
+    return res
+      .status(200)
+      .json({ status: "OK", msg: "Get API KEY Successfully", data: apiKey });
+  }
+
   async deleteChannel(req, res) {
     if (!req.params.id)
       return res.status(400).json({ status: "FAIL", msg: "Insufficient" });

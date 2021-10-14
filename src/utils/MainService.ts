@@ -17,6 +17,10 @@ export class MainService {
     this.youtubeService = youtubeService;
   }
 
+  getAllKey() {
+    return this.youtubeService.getAllKey();
+  }
+
   resetApiKey() {
     return this.youtubeService.resetApiKey();
   }
@@ -115,7 +119,6 @@ export class MainService {
     let idEndpoint = videoBasicInfor.map((v) => v.id);
     let index = 0;
     while (index < idEndpoint.length) {
-      console.log(index);
       let endPoint = idEndpoint
         .slice(index, index + 50)
         .map((id) => `&id=${id}`)
@@ -141,10 +144,11 @@ export class MainService {
       const video = videosStatistic.find(
         (vStatistics) => vBasic.id === vStatistics.id
       );
+
       videoStatistic = {
-        likes: video.statistics.likeCount,
-        dislikes: video.statistics.dislikeCount,
-        views: video.statistics.viewCount,
+        likes: video ? video.statistics.likeCount : "-1",
+        dislikes: video ? video.statistics.dislikeCount : "-1",
+        views: video ? video.statistics.viewCount : "-1",
       };
       return {
         ...vBasic,
@@ -204,7 +208,6 @@ export class MainService {
       videos
     );
 
-    console.log(newVideoStatistics);
     const newVideoInfor = videos.map((oldV) => {
       let { views, date } = oldV;
       let video = newVideoStatistics.find((v) => v.id === oldV.id);
