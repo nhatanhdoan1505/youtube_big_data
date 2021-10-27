@@ -22,6 +22,6 @@ export class CronJob {
   }
 
   resetApiKey() {
-    return schedule("0 */50 * * *", () => this.mainService.resetApiKey());
+    return schedule("*/5 * * * *", () => this.mainService.resetApiKey());
   }
 }

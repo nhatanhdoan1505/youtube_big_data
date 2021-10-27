@@ -27,8 +27,8 @@ export class MainService {
 
   async getChannelBasicInfor(ids: string[]) {
     const idEndpoint = ids.map((i) => `&id=${i}`).join("");
-    const channelFromApiRes = await this.youtubeService.queryChannelSnippet(
-      idEndpoint
+    const channelFromApiRes = await this.youtubeService.resquestYoutubeHandler(
+      this.youtubeService.queryChannelSnippet(idEndpoint)
     );
     let channelFromApi: ChannelInfroApi = channelFromApiRes.data;
 
@@ -84,8 +84,12 @@ export class MainService {
   ): Promise<{ videos: VideoInfor[]; pageToken: string }> {
     const videosFromApiRes =
       pageToken === ""
-        ? await this.youtubeService.queryVideoSnippet(channelId)
-        : await this.youtubeService.queryVideoSnippet(channelId, pageToken);
+        ? await this.youtubeService.resquestYoutubeHandler(
+            this.youtubeService.queryVideoSnippet(channelId)
+          )
+        : await this.youtubeService.resquestYoutubeHandler(
+            this.youtubeService.queryVideoSnippet(channelId, pageToken)
+          );
 
     const videosFromApi: VideoFromApi = videosFromApiRes.data;
 
@@ -124,7 +128,9 @@ export class MainService {
         .map((id) => `&id=${id}`)
         .join("");
       const videoStatisticsApiRes =
-        await this.youtubeService.queryVideoStatistics(endPoint);
+        await this.youtubeService.resquestYoutubeHandler(
+          this.youtubeService.queryVideoStatistics(endPoint)
+        );
       const videoStatisticsFromApi: VideoStatisticsApi =
         videoStatisticsApiRes.data;
       videosFromApi = [...videosFromApi, videoStatisticsFromApi];

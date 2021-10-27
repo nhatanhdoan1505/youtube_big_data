@@ -23,7 +23,7 @@ export default mongoose.model(
         publicAt: { type: String },
         days: { type: String, default: "" },
         likes: { type: String, default: "" },
-        dislikes: { type: Number, default: "" },
+        dislikes: { type: String, default: "" },
         views: { type: String, default: "" },
         date: { type: String, default: "" },
       },

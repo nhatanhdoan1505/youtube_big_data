@@ -36,7 +36,6 @@ const main = async () => {
 
   const cronJob = new CronJob(mainService);
   cronJob.updateChannelStatistics();
-  cronJob.resetApiKey();
   const port = process.env.PORT || 8080;
   app.listen(port, () => console.log(`Server is listenning at port ${port}`));
 };

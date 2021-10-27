@@ -1,8 +1,7 @@
 import { MainService } from "../utils/MainService";
 import { ChannelService } from "../models/channel/service";
 import { IChannel } from "models/channel/type";
-import { data } from "cheerio/lib/api/attributes";
-
+import fs from "fs";
 export class ChannelController {
   private mainService: MainService;
   private channelService: ChannelService = new ChannelService();
@@ -16,6 +15,20 @@ export class ChannelController {
     return res
       .status(200)
       .json({ status: "OK", msg: "Get API KEY Successfully", data: apiKey });
+  }
+
+  async updateApiKey(req, res) {
+    if (!req.body.key)
+      return res
+        .status(400)
+        .json({ status: "FAIL", data: { msg: "Insufficient paramester" } });
+
+    const apiKey = req.body.key.replace(/,/g, "\n");
+    fs.writeFileSync("apiKey.txt", apiKey);
+
+    return res
+      .status(200)
+      .json({ status: "OK", data: { msg: "Successfully" } });
   }
 
   async deleteChannel(req, res) {
