@@ -13,8 +13,8 @@ export class YoutubeService {
     return this.API_KEYs;
   }
 
-  resetApiKey() {
-    this.API_KEYs = this.INITIAL_KEY;
+  resetApiKey(apiKey = []) {
+    this.API_KEYs = apiKey.length === 0 ? this.INITIAL_KEY : apiKey;
   }
 
   removeExpiredKey(key: string) {
@@ -32,7 +32,10 @@ export class YoutubeService {
       if (response === false) continue;
       else break;
     }
-
+    console.log("out loop");
+    if (!response) {
+      console.log("Het Key");
+    }
     return response;
   }
 

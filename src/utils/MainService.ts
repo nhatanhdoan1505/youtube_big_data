@@ -21,8 +21,8 @@ export class MainService {
     return this.youtubeService.getAllKey();
   }
 
-  resetApiKey() {
-    return this.youtubeService.resetApiKey();
+  resetApiKey(apiKey?: string[]) {
+    return this.youtubeService.resetApiKey(apiKey);
   }
 
   async getChannelBasicInfor(ids: string[]) {

@@ -12,9 +12,11 @@ export class ChannelController {
 
   async getApiKey(req, res) {
     const apiKey = this.mainService.getAllKey();
-    return res
-      .status(200)
-      .json({ status: "OK", msg: "Get API KEY Successfully", data: apiKey });
+    return res.status(200).json({
+      status: "OK",
+      msg: "Get API KEY Successfully",
+      data: { apiKey },
+    });
   }
 
   async updateApiKey(req, res) {
@@ -23,12 +25,14 @@ export class ChannelController {
         .status(400)
         .json({ status: "FAIL", data: { msg: "Insufficient paramester" } });
 
-    const apiKey = req.body.key.replace(/,/g, "\n");
+    const apiKey = req.body.key.replace(/,/g, "\n") as string;
     fs.writeFileSync("apiKey.txt", apiKey);
 
-    return res
-      .status(200)
-      .json({ status: "OK", data: { msg: "Successfully" } });
+    this.mainService.resetApiKey(apiKey.split("\n"));
+    return res.status(200).json({
+      status: "OK",
+      data: { msg: "Successfully", apiKey: apiKey.split("\n") },
+    });
   }
 
   async deleteChannel(req, res) {
