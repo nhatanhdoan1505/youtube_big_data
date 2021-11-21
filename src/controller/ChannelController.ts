@@ -2,12 +2,23 @@ import { MainService } from "../utils/MainService";
 import { ChannelService } from "../models/channel/service";
 import { IChannel } from "models/channel/type";
 import fs from "fs";
+
 export class ChannelController {
   private mainService: MainService;
   private channelService: ChannelService = new ChannelService();
 
   constructor(mainService: MainService) {
     this.mainService = mainService;
+  }
+
+  async test(req, res) {
+    const ids = await (
+      await this.channelService.filterChannel({})
+    ).map((c) => c.id);
+    const idEndpoint = ids.map((i) => `&id=${i}`).join("");
+    console.log({ idEndpoint });
+    let data = await this.mainService.test(idEndpoint);
+    return res.status(200).json({ data });
   }
 
   async getApiKey(req, res) {
@@ -76,18 +87,35 @@ export class ChannelController {
     let existChannel = (await this.channelService.filterChannel({})).map(
       (c) => c.id
     );
-    let listUrl: string[] = req.body.url
-      .split(",")
+
+    let listUrl = req.body.url.split(",").map((url) => {
+      if (url[url.length - 1] === "/") {
+        url = url.slice(0, url.length - 1);
+      }
+      return url;
+    });
+    let listId: string[] = listUrl
+      .filter((url) => url.includes("channel"))
       .map((url) => url.replace("//", ""))
       .map((url) => url.split("/"))
       .map((url) => url[url.length - 1]);
-    listUrl = listUrl.filter((u) => !existChannel.some((i) => i === u));
+    let removeRepeatId = new Set(listId);
+    listId = [...removeRepeatId];
+    listId = listId.filter((u) => !existChannel.some((i) => i === u));
+
+    let listUserName = listUrl
+      .filter((url) => !url.includes("channel"))
+      .map((url) => url.replace("//", ""))
+      .map((url) => url.split("/"))
+      .map((url) => url[url.length - 1]);
+    let idFromUser = await this.mainService.getChannelId(listUserName);
+    listId = [...listId, ...idFromUser];
 
     if (listUrl.length === 0)
       return res.status(200).json({ status: "OK", data: [] });
 
     const label = req.body.label;
-    let channelData = await this.mainService.getChannel(listUrl);
+    let channelData = await this.mainService.getChannel(listId);
     channelData = channelData.map((c) => {
       return { ...c, label };
     });

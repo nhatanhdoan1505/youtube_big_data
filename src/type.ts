@@ -1449,3 +1449,21 @@ export interface DefaultOrMediumOrHigh {
   width: number;
   height: number;
 }
+
+//Channel Id from Api
+
+export interface ChannelIdFromAPI {
+  kind: string;
+  etag: string;
+  pageInfo: PageInfo;
+  items?: ItemsEntity[] | null;
+}
+export interface PageInfo {
+  totalResults: number;
+  resultsPerPage: number;
+}
+export interface ItemsEntity {
+  kind: string;
+  etag: string;
+  id: string;
+}

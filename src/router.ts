@@ -72,5 +72,9 @@ export class Router {
     this.app.put("/api/service/key", (req, res) => {
       return this.channelController.updateApiKey(req, res);
     });
+
+    this.app.get("/test", (req, res) => {
+      return this.channelController.test(req, res);
+    });
   }
 }

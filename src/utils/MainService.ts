@@ -1,5 +1,6 @@
 import { ChannelService } from "../models/channel/service";
 import {
+  ChannelIdFromAPI,
   ChannelInfor,
   ChannelInfroApi,
   VideoFromApi,
@@ -25,11 +26,28 @@ export class MainService {
     return this.youtubeService.resetApiKey(apiKey);
   }
 
+  async test(id) {
+    return await this.youtubeService.queryChannelSnippet(id);
+  }
+
+  async getChannelId(userNameList: string[]) {
+    let idList: string[] = [];
+    for (let userName of userNameList) {
+      let response = await this.youtubeService.queryChannelId(userName);
+      if (!response) continue;
+      let idRes: ChannelIdFromAPI = response.data;
+      if (idRes.items) idList = [...idList, idRes.items[0].id];
+    }
+    return idList;
+  }
+
   async getChannelBasicInfor(ids: string[]) {
     const idEndpoint = ids.map((i) => `&id=${i}`).join("");
-    const channelFromApiRes = await this.youtubeService.resquestYoutubeHandler(
-      this.youtubeService.queryChannelSnippet(idEndpoint)
+    console.log(idEndpoint);
+    const channelFromApiRes = await this.youtubeService.queryChannelSnippet(
+      idEndpoint
     );
+
     let channelFromApi: ChannelInfroApi = channelFromApiRes.data;
 
     let channelBasicInfor = channelFromApi.items.map((c) => {
@@ -44,6 +62,8 @@ export class MainService {
         date: new Date().toString(),
       };
     });
+
+    console.log("DONE GET CHANNEL SNIPPET", channelBasicInfor.length);
 
     return channelBasicInfor;
   }
@@ -84,13 +104,8 @@ export class MainService {
   ): Promise<{ videos: VideoInfor[]; pageToken: string }> {
     const videosFromApiRes =
       pageToken === ""
-        ? await this.youtubeService.resquestYoutubeHandler(
-            this.youtubeService.queryVideoSnippet(channelId)
-          )
-        : await this.youtubeService.resquestYoutubeHandler(
-            this.youtubeService.queryVideoSnippet(channelId, pageToken)
-          );
-
+        ? await this.youtubeService.queryVideoSnippet(channelId)
+        : await this.youtubeService.queryVideoSnippet(channelId, pageToken);
     const videosFromApi: VideoFromApi = videosFromApiRes.data;
 
     pageToken = videosFromApi.nextPageToken;
@@ -128,9 +143,7 @@ export class MainService {
         .map((id) => `&id=${id}`)
         .join("");
       const videoStatisticsApiRes =
-        await this.youtubeService.resquestYoutubeHandler(
-          this.youtubeService.queryVideoStatistics(endPoint)
-        );
+        await this.youtubeService.queryVideoStatistics(endPoint);
       const videoStatisticsFromApi: VideoStatisticsApi =
         videoStatisticsApiRes.data;
       videosFromApi = [...videosFromApi, videoStatisticsFromApi];
@@ -186,6 +199,7 @@ export class MainService {
 
       currentPageTokens = pageToken;
       videoPerPage = [...videoPerPage, ...videos];
+
       if (videoPerPage.some((nV) => oldVideos.some((cV) => cV.id === nV.id)))
         isEnoughPage = true;
     } while (!isEnoughPage);
@@ -232,7 +246,7 @@ export class MainService {
   async scanOldChannelInfor() {
     let newData = [];
 
-    const data = await this.channelService.filterChannel({});
+    let data = await this.channelService.filterChannel({});
     const channelIds = data.map((d) => d.id);
     let newChannelInfor = await this.getChannelBasicInfor(channelIds);
 
@@ -249,7 +263,11 @@ export class MainService {
       };
     });
 
+    data = data.filter((channel) =>
+      newChannelInfor.some((c) => c.id === channel.id)
+    );
     for (let channel of data) {
+      console.log("UPDATE VIDEOS INFOR", channel.title);
       const idChannel: string = channel.id;
 
       const oldVideos = channel.videoList.filter((v) => v !== null);
@@ -257,7 +275,10 @@ export class MainService {
 
       console.log("Done for old video");
 
-      let newVideos = await this.scanNewVideos(oldVideos, idChannel);
+      let newVideos =
+        oldVideos.length !== 0
+          ? await this.scanNewVideos(oldVideos, idChannel)
+          : [];
       newVideos = newVideos.map((v) => {
         return { ...v, date: new Date().toString() };
       });
