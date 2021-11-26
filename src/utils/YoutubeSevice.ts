@@ -64,6 +64,7 @@ export class YoutubeService {
     let url: string;
     let response: any;
     for (let i = 0; i < this.API_KEYs.length; i++) {
+      console.log("QUERY VIDEO SNIPPET", i);
       url =
         pageToken === ""
           ? `https://youtube.googleapis.com/youtube/v3/search?part=snippet&channelId=${channelId}&maxResults=50&order=date&key=${this.API_KEYs[i]}`
@@ -84,6 +85,7 @@ export class YoutubeService {
     let url: string;
     let response: any;
     for (let i = 0; i < this.API_KEYs.length; i++) {
+      console.log("QUERY VIDEO STATISTIC", i);
       url = `https://youtube.googleapis.com/youtube/v3/videos?part=statistics${idEndpoint}&key=${this.API_KEYs[i]}`;
       try {
         response = await axios.get(url);

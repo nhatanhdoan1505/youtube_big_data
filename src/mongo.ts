@@ -16,9 +16,10 @@ const options: ConnectOptions & ConnectionOptionsExtend = {
 
 export const connectMongo = async () => {
   mongoose
-    .connect("mongodb://admin:123456@149.28.153.126:27017", options)
+    .connect("mongodb://admin:123456@45.76.159.187:27017", options)
     .then(() => {
       console.log("Connect DB");
     })
     .catch((err) => console.log({ err }));
 };
+// 45.76.159.187:root:xE{7A)n2qzTQ22D=

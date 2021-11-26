@@ -42,26 +42,36 @@ export class MainService {
   }
 
   async getChannelBasicInfor(ids: string[]) {
-    const idEndpoint = ids.map((i) => `&id=${i}`).join("");
-    console.log(idEndpoint);
-    const channelFromApiRes = await this.youtubeService.queryChannelSnippet(
-      idEndpoint
-    );
+    let channelFromApiList: ChannelInfroApi[] = [];
+    let index = 0;
+    while (index < ids.length) {
+      let endPoint = ids
+        .slice(index, index + 50)
+        .map((id) => `&id=${id}`)
+        .join("");
+      const channelFromApiRes = await this.youtubeService.queryChannelSnippet(
+        endPoint
+      );
 
-    let channelFromApi: ChannelInfroApi = channelFromApiRes.data;
+      let channelFromApi: ChannelInfroApi = channelFromApiRes.data;
+      channelFromApiList = [...channelFromApiList, channelFromApi];
+      index += 50;
+    }
 
-    let channelBasicInfor = channelFromApi.items.map((c) => {
-      return {
-        urlChannel: `https://www.youtube.com/channel/${c.id}`,
-        id: c.id,
-        subscribe: c.statistics.subscriberCount,
-        views: c.statistics.viewCount,
-        title: c.snippet.title,
-        numberVideos: c.statistics.videoCount,
-        channelThumnail: c.snippet.thumbnails.high.url,
-        date: new Date().toString(),
-      };
-    });
+    let channelBasicInfor = channelFromApiList
+      .map((channel) =>
+        channel.items.map((c) => ({
+          urlChannel: `https://www.youtube.com/channel/${c.id}`,
+          id: c.id,
+          subscribe: c.statistics.subscriberCount,
+          views: c.statistics.viewCount,
+          title: c.snippet.title,
+          numberVideos: c.statistics.videoCount,
+          channelThumnail: c.snippet.thumbnails.high.url,
+          date: new Date().toString(),
+        }))
+      )
+      .reduce((a, b) => a.concat(b), []);
 
     console.log("DONE GET CHANNEL SNIPPET", channelBasicInfor.length);
 
