@@ -35,6 +35,7 @@ export class MainService {
     for (let userName of userNameList) {
       let response = await this.youtubeService.queryChannelId(userName);
       if (!response) continue;
+      if (!response.data) continue;
       let idRes: ChannelIdFromAPI = response.data;
       if (idRes.items) idList = [...idList, idRes.items[0].id];
     }
@@ -82,9 +83,14 @@ export class MainService {
     let channelInfor: ChannelInfor[] = [];
     let channelBasicInfor = await this.getChannelBasicInfor(ids);
 
+    let index = 0;
     for (let c of channelBasicInfor) {
+      console.log(
+        `GET CHANNEL ${c.title} ${index + 1}/${channelBasicInfor.length}`
+      );
       let videoList = await this.getVideos(c.id);
       channelInfor.push({ ...c, videoList });
+      index += 1;
     }
 
     return channelInfor;

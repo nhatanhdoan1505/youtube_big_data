@@ -24,6 +24,12 @@ export class YoutubeService {
     return this.API_KEYs[Math.floor(Math.random() * this.API_KEYs.length)];
   }
 
+  sufferApiKey(apiKey: string) {
+    let index = this.API_KEYs.findIndex((key) => key === apiKey);
+    this.API_KEYs.push(apiKey);
+    this.API_KEYs.splice(index, 1);
+  }
+
   async queryChannelId(userName: string) {
     let response: any;
     for (let i = 0; i < this.API_KEYs.length; i++) {
@@ -35,8 +41,10 @@ export class YoutubeService {
         response = error;
       }
 
-      if (response.status !== 200 && !response.data) continue;
-      else break;
+      if (response.status !== 200 && !response.data) {
+        this.sufferApiKey(this.API_KEYs[i]);
+        continue;
+      } else break;
     }
     return response;
   }
@@ -44,7 +52,6 @@ export class YoutubeService {
   async queryChannelSnippet(idEndpoint: string) {
     let response: any;
     for (let i = 0; i < this.API_KEYs.length; i++) {
-      console.log({ i });
       try {
         response = await axios.get(
           `https://www.googleapis.com/youtube/v3/channels?part=statistics&part=snippet${idEndpoint}&key=${this.API_KEYs[i]}`
@@ -52,11 +59,12 @@ export class YoutubeService {
       } catch (error) {
         response = error;
       }
-      console.log(response.status);
-      if (response.status !== 200 && !response.data) continue;
-      else break;
+
+      if (response.status !== 200 && !response.data) {
+        this.sufferApiKey(this.API_KEYs[i]);
+        continue;
+      } else break;
     }
-    console.log(response.data);
     return response;
   }
 
@@ -75,8 +83,10 @@ export class YoutubeService {
         response = error;
       }
 
-      if (response.status !== 200 && !response.data) continue;
-      else break;
+      if (response.status !== 200 && !response.data) {
+        this.sufferApiKey(this.API_KEYs[i]);
+        continue;
+      } else break;
     }
     return response;
   }
@@ -93,8 +103,10 @@ export class YoutubeService {
         response = error;
       }
 
-      if (response.status !== 200 && !response.data) continue;
-      else break;
+      if (response.status !== 200 && !response.data) {
+        this.sufferApiKey(this.API_KEYs[i]);
+        continue;
+      } else break;
     }
     return response;
   }

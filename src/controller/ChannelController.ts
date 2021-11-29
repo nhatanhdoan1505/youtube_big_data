@@ -115,10 +115,16 @@ export class ChannelController {
       return res.status(200).json({ status: "OK", data: [] });
 
     const label = req.body.label;
+
+    console.log(`GET ${listId.length}`);
     let channelData = await this.mainService.getChannel(listId);
     channelData = channelData.map((c) => {
       return { ...c, label };
     });
+
+    console.log(`GET ${channelData.length} complete`);
+
+    fs.writeFileSync("data.txt", JSON.stringify(channelData));
 
     const saveDataPromise = channelData.map((c: IChannel) =>
       this.channelService.createChannel(c)
