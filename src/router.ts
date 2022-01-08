@@ -1,22 +1,30 @@
+import { ServiceController } from "./controller/ServiceController";
+import { UserController } from "./controller/UserController";
 import { ChannelController } from "./controller/ChannelController";
-import { UserController } from "controller/UserController";
 
 export class Router {
   private app;
-  private channelController: ChannelController;
+  private serviceController: ServiceController;
   private userController: UserController;
+  private channelController: ChannelController;
 
   constructor(
     app,
-    channelController: ChannelController,
-    userController: UserController
+    serviceController: ServiceController,
+    userController: UserController,
+    channelController: ChannelController
   ) {
     this.app = app;
-    this.channelController = channelController;
+    this.serviceController = serviceController;
     this.userController = userController;
+    this.channelController = channelController;
   }
 
   route() {
+    this.app.post("/api/refesh", (req, res) => {
+      return this.channelController.refesh(req, res);
+    });
+
     this.app.post("/api/auth/sign_up", (req, res) => {
       return this.userController.siginUp(req, res);
     });
@@ -34,19 +42,31 @@ export class Router {
     });
 
     this.app.post("/api/service/getChannel", (req, res) => {
-      return this.channelController.getVideosOfChannel(req, res);
+      return this.serviceController.getVideosOfChannel(req, res);
     });
 
     this.app.post("/api/service/scan", (req, res) => {
-      return this.channelController.scanOldChannelInfor(req, res);
+      return this.serviceController.scanOldChannelInfor(req, res);
     });
 
     this.app.post("/api/channel/sort/:id", (req, res) => {
-      return this.channelController.getVideoDataSort(req, res);
+      return this.serviceController.getVideoDataSort(req, res);
     });
 
     this.app.post("/api/channel/sort/:id/reverse", (req, res) => {
-      return this.channelController.getVideoDataSortReverse(req, res);
+      return this.serviceController.getVideoDataSortReverse(req, res);
+    });
+
+    this.app.get("/api/service/key", (req, res) => {
+      return this.serviceController.getApiKey(req, res);
+    });
+
+    this.app.put("/api/service/key", (req, res) => {
+      return this.serviceController.updateApiKey(req, res);
+    });
+
+    this.app.get("/test", (req, res) => {
+      return this.serviceController.test(req, res);
     });
 
     this.app.get("/api/channels", (req, res) => {
@@ -57,6 +77,10 @@ export class Router {
       return this.channelController.getChannelFromDBByLabel(req, res);
     });
 
+    this.app.get("/api/channel/system", (req, res) => {
+      return this.channelController.getSystemInformation(req, res);
+    });
+
     this.app.post("/api/channel/id", (req, res) => {
       return this.channelController.getChannelFromDBById(req, res);
     });
@@ -65,16 +89,16 @@ export class Router {
       return this.channelController.deleteChannel(req, res);
     });
 
-    this.app.get("/api/service/key", (req, res) => {
-      return this.channelController.getApiKey(req, res);
+    this.app.get("/api/channel/label/", (req, res) => {
+      return this.channelController.getAllLabel(req, res);
     });
 
-    this.app.put("/api/service/key", (req, res) => {
-      return this.channelController.updateApiKey(req, res);
+    this.app.get("/api/channel/hot/:page", (req, res) => {
+      return this.channelController.getHotChannel(req, res);
     });
 
-    this.app.get("/test", (req, res) => {
-      return this.channelController.test(req, res);
+    this.app.get("/api/video/hot/:page", (req, res) => {
+      return this.channelController.getHotVideo(req, res);
     });
   }
 }

@@ -1,48 +1,41 @@
-import { MainService } from "../utils/MainService";
 import { ChannelService } from "../models/channel/service";
-import { IChannel } from "models/channel/type";
+import * as _ from "lodash";
 import fs from "fs";
 
 export class ChannelController {
-  private mainService: MainService;
   private channelService: ChannelService = new ChannelService();
 
-  constructor(mainService: MainService) {
-    this.mainService = mainService;
+  async refesh(req, res) {
+    let channelList = await this.channelService.filterChannel({});
+    channelList = channelList
+      .filter((channel) => {
+        let rep = channelList.filter((c) => c.id === channel.id).length;
+        if (rep === 1) return channel;
+        if (rep > 1 && channel.date.split("|").length > 1) return channel;
+        else return null;
+      })
+      .filter((c) => c);
+    await this.channelService.deleteChannel({});
+    fs.writeFileSync("refesh.txt", JSON.stringify(channelList));
   }
 
-  async test(req, res) {
-    const ids = await (
-      await this.channelService.filterChannel({})
-    ).map((c) => c.id);
-    const idEndpoint = ids.map((i) => `&id=${i}`).join("");
-    console.log({ idEndpoint });
-    let data = await this.mainService.test(idEndpoint);
-    return res.status(200).json({ data });
-  }
+  async getSystemInformation(req, res) {
+    let channelList = await this.channelService.filterChannel({});
+    let views = channelList
+      .map((channel) => +channel.views)
+      .reduce((a, b) => a + b, 0);
+    let subscribers = channelList
+      .map((channel) => +channel.subscribe)
+      .reduce((a, b) => a + b, 0);
+    let videos = channelList
+      .map((channel) => +channel.numberVideos)
+      .reduce((a, b) => a + b, 0);
+    let channels = await (await this.channelService.filterChannel({})).length;
 
-  async getApiKey(req, res) {
-    const apiKey = this.mainService.getAllKey();
     return res.status(200).json({
       status: "OK",
-      msg: "Get API KEY Successfully",
-      data: { apiKey },
-    });
-  }
-
-  async updateApiKey(req, res) {
-    if (!req.body.key)
-      return res
-        .status(400)
-        .json({ status: "FAIL", data: { msg: "Insufficient paramester" } });
-
-    const apiKey = req.body.key.replace(/,/g, "\n") as string;
-    fs.writeFileSync("apiKey.txt", apiKey);
-
-    this.mainService.resetApiKey(apiKey.split("\n"));
-    return res.status(200).json({
-      status: "OK",
-      data: { msg: "Successfully", apiKey: apiKey.split("\n") },
+      msg: "OK",
+      data: { views, subscribers, videos, channels },
     });
   }
 
@@ -51,9 +44,7 @@ export class ChannelController {
       return res.status(400).json({ status: "FAIL", msg: "Insufficient" });
     this.channelService.deleteChannel({ id: req.params.id });
     const channelData = await this.channelService.filterChannel({});
-    return res
-      .status(200)
-      .json({ status: "OK", msg: "Delete Successfully", data: channelData });
+    return res.status(200).json({ status: "OK", msg: "OK", data: channelData });
   }
 
   async getAllChannels(req, res) {
@@ -83,111 +74,103 @@ export class ChannelController {
     return res.status(200).json({ status: "OK", data: channelData });
   }
 
-  async getVideosOfChannel(req, res) {
-    let existChannel = (await this.channelService.filterChannel({})).map(
-      (c) => c.id
-    );
+  async getAllLabel(req, res) {
+    let labelList = await (
+      await this.channelService.filterChannel({})
+    ).map((c) => c.label);
+    labelList = [...new Set(labelList)];
 
-    let listUrl = req.body.url.split(",").map((url) => {
-      if (url[url.length - 1] === "/") {
-        url = url.slice(0, url.length - 1);
-      }
-      return url;
-    });
-    let listId: string[] = listUrl
-      .filter((url) => url.includes("channel"))
-      .map((url) => url.replace("//", ""))
-      .map((url) => url.split("/"))
-      .map((url) => url[url.length - 1]);
-    let removeRepeatId = new Set(listId);
-    listId = [...removeRepeatId];
-    listId = listId.filter((u) => !existChannel.some((i) => i === u));
-
-    let listUserName = listUrl
-      .filter((url) => !url.includes("channel"))
-      .map((url) => url.replace("//", ""))
-      .map((url) => url.split("/"))
-      .map((url) => url[url.length - 1]);
-    let idFromUser = await this.mainService.getChannelId(listUserName);
-    listId = [...listId, ...idFromUser];
-
-    if (listUrl.length === 0)
-      return res.status(200).json({ status: "OK", data: [] });
-
-    const label = req.body.label;
-
-    console.log(`GET ${listId.length}`);
-    let channelData = await this.mainService.getChannel(listId);
-    channelData = channelData.map((c) => {
-      return { ...c, label };
-    });
-
-    console.log(`GET ${channelData.length} complete`);
-
-    fs.writeFileSync("data.txt", JSON.stringify(channelData));
-
-    const saveDataPromise = channelData.map((c: IChannel) =>
-      this.channelService.createChannel(c)
-    );
-    await Promise.all(saveDataPromise);
-
-    return res.status(200).json({ status: "OK", data: channelData });
+    return res.status(200).json({ status: "OK", data: labelList });
   }
 
-  async scanOldChannelInfor(req, res) {
-    const newData: IChannel[] = await this.mainService.scanOldChannelInfor();
-    const updateChannelPromise = newData.map((c) =>
-      this.channelService.updateChannel({ id: c.id }, c)
-    );
-    await Promise.all(updateChannelPromise);
-    return res.status(200).json({ status: "OK", data: newData });
-  }
-
-  async getVideoDataSort(req, res) {
-    if (!req.params.id || !req.body.query)
+  async getHotChannel(req, res) {
+    if (!+req.params.page)
       return res
         .status(400)
-        .json({ status: "FAIL", msg: "Insufficient paramester" });
+        .json({ status: "FAIL", msg: "Insuffient paramester" });
 
-    const data: IChannel = await this.channelService.findChannel({
-      id: req.params.id,
+    let channelList = await this.channelService.filterChannel({});
+    let channelListSort = channelList
+      .map((c) => {
+        let { videoList, subscribe, views, numberVideos, ...channelInfo } = c;
+        let gapViews = (
+          +_.nth(views.split("|"), -1) - +_.nth(views.split("|"), -2)
+        ).toString();
+        views = _.nth(views.split("|"), -1);
+        let gapSubscribes = (
+          +_.nth(subscribe.split("|"), -1) - +_.nth(subscribe.split("|"), -2)
+        ).toString();
+        subscribe = _.nth(subscribe.split("|"), -1);
+        let gapNumberVideos = (
+          +_.nth(numberVideos.split("|"), -1) -
+          +_.nth(numberVideos.split("|"), -2)
+        ).toString();
+        numberVideos = _.nth(numberVideos.split("|"), -1);
+
+        return {
+          ...channelInfo,
+          views,
+          numberVideos,
+          subscribe,
+          gapNumberVideos,
+          gapSubscribes,
+          gapViews,
+        };
+      })
+      .sort((a, b) => +b.views - +a.views);
+
+    let totalPage =
+      channelListSort.length % 100 !== 0
+        ? Math.ceil(channelListSort.length / 100)
+        : channelListSort.length / 100;
+
+    let page = +req.params.page > totalPage ? totalPage : +req.params.page;
+    let startIndex = page === 0 || page || 1 ? 0 : (page - 1) * 100;
+
+    return res.status(200).json({
+      status: "OK",
+      data: {
+        channelList: channelListSort.slice(startIndex, startIndex + 100),
+        totalPage,
+        page,
+      },
     });
-    if (!data) return null;
-
-    const videos = data.videoList;
-
-    let sortData = videos.sort(
-      (a, b) => b[`${req.body.query}`] - a[`${req.body.query}`]
-    );
-    data.videoList = sortData;
-
-    if (!data)
-      return res.status(404).json({ status: "FAIL", msg: "Item not found" });
-
-    return res.status(200).json({ status: "OK", data: data });
   }
 
-  async getVideoDataSortReverse(req, res) {
-    if (!req.params.id || !req.body.query)
+  async getHotVideo(req, res) {
+    if (!+req.params.page)
       return res
         .status(400)
-        .json({ status: "FAIL", msg: "Insufficient paramester" });
+        .json({ status: "FAIL", msg: "Insuffient paramester" });
 
-    const data: IChannel = await this.channelService.findChannel({
-      id: req.params.id,
+    const channelList = await this.channelService.filterChannel({});
+    let videoList = channelList
+      .map((c) => {
+        let { urlChannel, title, videoList } = c;
+        return videoList.map((v) => ({
+          ...v,
+          channelInfor: { urlChannel, title },
+        }));
+      })
+      .reduce((pre, next) => pre.concat(next));
+
+    let videoListSort = videoList.sort((a, b) => +b.views - +a.views);
+
+    let totalPage =
+      videoListSort.length % 100 !== 0
+        ? Math.ceil(videoListSort.length / 100)
+        : videoListSort.length / 100;
+
+    let page = +req.params.page > totalPage ? totalPage : +req.params.page;
+    let startIndex = page === 0 || page || 1 ? 0 : (page - 1) * 100;
+
+    return res.status(200).json({
+      status: "OK",
+      data: {
+        videoList: videoListSort.slice(startIndex, startIndex + 100),
+        totalPage,
+        page,
+      },
     });
-    if (!data) return null;
-
-    const videos = data.videoList;
-
-    let sortData = videos.sort(
-      (a, b) => a[`${req.body.query}`] - b[`${req.body.query}`]
-    );
-    data.videoList = sortData;
-
-    if (!data)
-      return res.status(404).json({ status: "FAIL", msg: "Item not found" });
-
-    return res.status(200).json({ status: "OK", data: data });
   }
 }

@@ -1,3 +1,4 @@
+import { IChannel } from "models/channel/type";
 import { ChannelService } from "../models/channel/service";
 import {
   ChannelIdFromAPI,
@@ -153,7 +154,9 @@ export class MainService {
     let videosFromApi: VideoStatisticsApi[] = [];
     let idEndpoint = videoBasicInfor.map((v) => v.id);
     let index = 0;
+    console.log(`Get ${videoBasicInfor.length} videos`);
     while (index < idEndpoint.length) {
+      console.log(Math.floor(index / 50) + 1 + " loop");
       let endPoint = idEndpoint
         .slice(index, index + 50)
         .map((id) => `&id=${id}`)
@@ -207,7 +210,10 @@ export class MainService {
     let videoPerPage: VideoInfor[] = [];
 
     let currentPageTokens = "";
+
+    let index = 1;
     do {
+      console.log(`${index} loop`);
       let { videos, pageToken } =
         currentPageTokens === ""
           ? await this.getVideoPerPage(channelId)
@@ -218,10 +224,14 @@ export class MainService {
 
       if (videoPerPage.some((nV) => oldVideos.some((cV) => cV.id === nV.id)))
         isEnoughPage = true;
+
+      if (!pageToken) break;
+      index += 1;
     } while (!isEnoughPage);
 
     newVideos = this.getNewVideo(videoPerPage, oldVideos);
 
+    console.log(`Get ${newVideos.length} new videos`);
     return newVideos;
   }
 
@@ -240,13 +250,13 @@ export class MainService {
   }
 
   async updateVideosStatistics(videos: VideoInfor[]) {
-    const newVideoStatistics: VideoInfor[] = await this.getVideoFullInfor(
+    const videoNewStatistics: VideoInfor[] = await this.getVideoFullInfor(
       videos
     );
 
-    const newVideoInfor = videos.map((oldV) => {
+    const videoNewInfor = videos.map((oldV) => {
       let { views, date } = oldV;
-      let video = newVideoStatistics.find((v) => v.id === oldV.id);
+      let video = videoNewStatistics.find((v) => v.id === oldV.id);
       return {
         ...oldV,
         likes: video.likes,
@@ -256,13 +266,12 @@ export class MainService {
         date: `${date}|${new Date().toString()}`,
       };
     });
-    return newVideoInfor;
+    return videoNewInfor;
   }
 
-  async scanOldChannelInfor() {
+  async scanOldChannelInfor(data: IChannel[]) {
     let newData = [];
 
-    let data = await this.channelService.filterChannel({});
     const channelIds = data.map((d) => d.id);
     let newChannelInfor = await this.getChannelBasicInfor(channelIds);
 
@@ -282,24 +291,25 @@ export class MainService {
     data = data.filter((channel) =>
       newChannelInfor.some((c) => c.id === channel.id)
     );
+
+    console.log("Done update channel infor");
     for (let channel of data) {
-      console.log("UPDATE VIDEOS INFOR", channel.title);
+      console.log("Update old video infor", channel.title);
       const idChannel: string = channel.id;
 
       const oldVideos = channel.videoList.filter((v) => v !== null);
       let updateVideosStatistics = await this.updateVideosStatistics(oldVideos);
 
-      console.log("Done for old video");
+      console.log(`Done for old video ${channel.title}`);
 
-      let newVideos =
-        oldVideos.length !== 0
-          ? await this.scanNewVideos(oldVideos, idChannel)
-          : [];
+      console.log(`Scan new video ${channel.title}`);
+      let newVideos = await this.scanNewVideos(oldVideos, idChannel);
+
       newVideos = newVideos.map((v) => {
         return { ...v, date: new Date().toString() };
       });
 
-      console.log("Done for new video");
+      console.log(`Done for new video ${channel.title}`);
 
       let channelNewInfor = updateChannelStatistics.find(
         (c) => c.id === channel.id
@@ -309,7 +319,8 @@ export class MainService {
         ...channelNewInfor,
         videoList: [...updateVideosStatistics, ...newVideos],
       });
-      console.log("done");
+      console.log(`done ${channel.title}`);
+      console.log(`-----------------------`);
     }
 
     return newData;

@@ -7,10 +7,11 @@ import { MainService } from "./utils/MainService";
 import { Router } from "./router";
 import { connectMongo } from "./mongo";
 import dotenv = require("dotenv");
-import { ChannelController } from "./controller/ChannelController";
+import { ServiceController } from "./controller/ServiceController";
 import { UserController } from "./controller/UserController";
 import { CronJob } from "./cronJob";
 import fs from "fs";
+import { ChannelController } from "./controller/ChannelController";
 
 dotenv.config();
 
@@ -20,10 +21,16 @@ const main = async () => {
   const apiKey = fs.readFileSync("apiKey.txt", { encoding: "utf-8" });
   const youtubeService = new YoutubeService(apiKey.split(/\n/));
   const mainService = new MainService(youtubeService);
-  const channelController = new ChannelController(mainService);
+  const serviceController = new ServiceController(mainService);
   const userController = new UserController();
+  const channelController = new ChannelController();
 
-  const router = new Router(app, channelController, userController);
+  const router = new Router(
+    app,
+    serviceController,
+    userController,
+    channelController
+  );
 
   await connectMongo();
 

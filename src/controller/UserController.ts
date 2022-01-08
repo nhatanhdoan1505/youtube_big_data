@@ -108,7 +108,7 @@ export class UserController {
       return res
         .status(400)
         .json({ status: "Fail", msg: "Insufficient paramester" });
-        
+
     try {
       const decodeToken: any = await this.authService.verifyToken(
         req.body.token

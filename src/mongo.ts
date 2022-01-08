@@ -16,7 +16,7 @@ const options: ConnectOptions & ConnectionOptionsExtend = {
 
 export const connectMongo = async () => {
   mongoose
-    .connect("mongodb://admin:123456@45.76.159.187:27017", options)
+    .connect("mongodb://admin:123456@mongodb:27017", options)
     .then(() => {
       console.log("Connect DB");
     })
