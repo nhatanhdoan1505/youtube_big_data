@@ -6,7 +6,7 @@ export class UserController {
   private userService: UserService = new UserService();
   private authService: AuthenticationService = new AuthenticationService();
 
-  async siginUp(req, res) {
+  async signUp(req, res) {
     if (!req.body.email || !req.body.password)
       return res
         .status(400)

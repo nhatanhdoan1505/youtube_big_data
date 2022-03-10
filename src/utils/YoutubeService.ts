@@ -30,6 +30,10 @@ export class YoutubeService {
     this.API_KEYs.splice(index, 1);
   }
 
+  outOfDateKey() {
+    console.log("CHANGE KEY");
+  }
+
   async queryChannelId(userName: string) {
     let response: any;
     for (let i = 0; i < this.API_KEYs.length; i++) {
@@ -41,8 +45,8 @@ export class YoutubeService {
         response = error;
       }
 
-      console.log("Handler", { user: userName, res: response.status });
       if (response.status !== 200 && !response.data) {
+        this.outOfDateKey();
         this.sufferApiKey(this.API_KEYs[i]);
         continue;
       } else break;
@@ -61,8 +65,8 @@ export class YoutubeService {
         response = error;
       }
 
-      console.log("Handler", response.status);
       if (response.status !== 200 && !response.data) {
+        this.outOfDateKey();
         this.sufferApiKey(this.API_KEYs[i]);
         continue;
       } else break;
@@ -70,7 +74,7 @@ export class YoutubeService {
     return response;
   }
 
-  async queryVideoSnippet(channelId: string, pageToken = "") {
+  async queryVideoListOfChannel(channelId: string, pageToken = "") {
     let url: string;
     let response: any;
     for (let i = 0; i < this.API_KEYs.length; i++) {
@@ -87,6 +91,7 @@ export class YoutubeService {
 
       // console.log("Handler");
       if (response.status !== 200 && !response.data) {
+        this.outOfDateKey();
         this.sufferApiKey(this.API_KEYs[i]);
         continue;
       } else break;
@@ -94,12 +99,12 @@ export class YoutubeService {
     return response;
   }
 
-  async queryVideoStatistics(idEndpoint: string) {
+  async queryVideoInformation(idEndpoint: string) {
     let url: string;
     let response: any;
     for (let i = 0; i < this.API_KEYs.length; i++) {
       // console.log("QUERY VIDEO STATISTIC", i);
-      url = `https://youtube.googleapis.com/youtube/v3/videos?part=statistics${idEndpoint}&key=${this.API_KEYs[i]}`;
+      url = `https://youtube.googleapis.com/youtube/v3/videos?part=snippet&part=statistics${idEndpoint}&key=${this.API_KEYs[i]}`;
       try {
         response = await axios.get(url);
       } catch (error) {
@@ -108,6 +113,7 @@ export class YoutubeService {
 
       // console.log("Handler");
       if (response.status !== 200 && !response.data) {
+        this.outOfDateKey();
         this.sufferApiKey(this.API_KEYs[i]);
         continue;
       } else break;

@@ -2,7 +2,7 @@ import express from "express";
 import path = require("path");
 import cors from "cors";
 import * as bodyParser from "body-parser";
-import { YoutubeService } from "./utils/YoutubeSevice";
+import { YoutubeService } from "./utils/YoutubeService";
 import { MainService } from "./utils/MainService";
 import { Router } from "./router";
 import { connectMongo } from "./mongo";

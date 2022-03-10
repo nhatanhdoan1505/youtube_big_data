@@ -14,7 +14,7 @@ export default mongoose.model(
     title: { type: String },
     numberVideos: { type: String, default: "" },
     date: { type: String, default: "" },
-    channelThumnail: { type: String },
+    channelThumbnail: { type: String },
     videoList: [
       {
         thumbnail: { type: String },
@@ -25,7 +25,10 @@ export default mongoose.model(
         likes: { type: String, default: "" },
         dislikes: { type: String, default: "" },
         views: { type: String, default: "" },
+        commentCount: { type: String, default: "" },
         date: { type: String, default: "" },
+        description: { type: String, default: "" },
+        tags: [{ type: String, default: null }],
       },
     ],
   })

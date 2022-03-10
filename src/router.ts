@@ -21,12 +21,12 @@ export class Router {
   }
 
   route() {
-    this.app.post("/api/refesh", (req, res) => {
-      return this.channelController.refesh(req, res);
+    this.app.post("/api/refresh", (req, res) => {
+      return this.channelController.refresh(req, res);
     });
 
     this.app.post("/api/auth/sign_up", (req, res) => {
-      return this.userController.siginUp(req, res);
+      return this.userController.signUp(req, res);
     });
 
     this.app.post("/api/auth/verifyCode", (req, res) => {
@@ -42,19 +42,11 @@ export class Router {
     });
 
     this.app.post("/api/service/getChannel", (req, res) => {
-      return this.serviceController.getVideosOfChannel(req, res);
+      return this.serviceController.getChannelInformation(req, res);
     });
 
     this.app.post("/api/service/scan", (req, res) => {
-      return this.serviceController.scanOldChannelInfor(req, res);
-    });
-
-    this.app.post("/api/channel/sort/:id", (req, res) => {
-      return this.serviceController.getVideoDataSort(req, res);
-    });
-
-    this.app.post("/api/channel/sort/:id/reverse", (req, res) => {
-      return this.serviceController.getVideoDataSortReverse(req, res);
+      return this.serviceController.scanOldChannelInformation(req, res);
     });
 
     this.app.get("/api/service/key", (req, res) => {
@@ -77,7 +69,7 @@ export class Router {
       return this.channelController.getChannelFromDBByLabel(req, res);
     });
 
-    this.app.get("/api/channel/system", (req, res) => {
+    this.app.get("/api/system", (req, res) => {
       return this.channelController.getSystemInformation(req, res);
     });
 
@@ -93,12 +85,28 @@ export class Router {
       return this.channelController.getAllLabel(req, res);
     });
 
-    this.app.get("/api/channel/hot/:page", (req, res) => {
-      return this.channelController.getHotChannel(req, res);
+    this.app.post("/api/video/hot", (req, res) => {
+      return this.channelController.updateHotVideo(req, res);
     });
 
-    this.app.get("/api/video/hot/:page", (req, res) => {
-      return this.channelController.getHotVideo(req, res);
+    this.app.post("/api/channel/hot", (req, res) => {
+      return this.channelController.updateHotChannel(req, res);
+    });
+
+    this.app.post("/api/channel/sort/:pageNumber", (req, res) => {
+      return this.channelController.getSortChannel(req, res);
+    });
+
+    this.app.post("/api/video/sort/:pageNumber", (req, res) => {
+      return this.channelController.getSortVideos(req, res);
+    });
+
+    this.app.get("/api/video/sort/total", (req, res) => {
+      return this.channelController.getTotalSortVideos(req, res);
+    });
+
+    this.app.get("/api/channel/sort/total", (req, res) => {
+      return this.channelController.getTotalSortChannels(req, res);
     });
   }
 }
