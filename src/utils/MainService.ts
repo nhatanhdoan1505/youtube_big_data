@@ -3,6 +3,7 @@ import {
   IVideo,
   VideoStatistic,
   VideoDescription,
+  IChannelBaseInformation,
 } from "models/channel/type";
 import { ChannelService } from "../models/channel/service";
 import {
@@ -47,7 +48,9 @@ export class MainService {
     return idList;
   }
 
-  async getChannelBasicInformation(ids: string[]) {
+  async getChannelBasicInformation(
+    ids: string[]
+  ): Promise<IChannelBaseInformation[]> {
     let channelFromApiList: ChannelInformationApi[] = [];
     let index = 0;
     while (index < ids.length) {
@@ -66,16 +69,45 @@ export class MainService {
 
     let channelBasicInformation = channelFromApiList
       .map((channel) =>
-        channel.items.map((c) => ({
-          urlChannel: `https://www.youtube.com/channel/${c.id}`,
-          id: c.id,
-          subscribe: c.statistics.subscriberCount,
-          views: c.statistics.viewCount,
-          title: c.snippet.title,
-          numberVideos: c.statistics.videoCount,
-          channelThumbnail: c.snippet.thumbnails.high.url,
-          date: new Date().toString(),
-        }))
+        channel.items.map((c) => {
+          if (!c.snippet.publishedAt)
+            return {
+              urlChannel: `https://www.youtube.com/channel/${c.id}`,
+              id: c.id,
+              subscribe: c.statistics.subscriberCount,
+              views: c.statistics.viewCount,
+              title: c.snippet.title,
+              numberVideos: c.statistics.videoCount,
+              channelThumbnail: c.snippet.thumbnails.high.url,
+              date: new Date().toString(),
+              bannerExternalUrl: c.brandingSettings.image
+                ? c.brandingSettings.image.bannerExternalUrl
+                : "",
+              description: c.snippet.description ? c.snippet.description : "",
+              tags: c.brandingSettings.channel.keywords
+                ? c.brandingSettings.channel.keywords
+                : "",
+            };
+
+          return {
+            urlChannel: `https://www.youtube.com/channel/${c.id}`,
+            id: c.id,
+            subscribe: c.statistics.subscriberCount,
+            views: c.statistics.viewCount,
+            title: c.snippet.title,
+            numberVideos: c.statistics.videoCount,
+            channelThumbnail: c.snippet.thumbnails.high.url,
+            date: new Date().toString(),
+            bannerExternalUrl: c.brandingSettings.image
+              ? c.brandingSettings.image.bannerExternalUrl
+              : "",
+            publishedAt: new Date(c.snippet.publishedAt),
+            description: c.snippet.description ? c.snippet.description : "",
+            tags: c.brandingSettings.channel.keywords
+              ? c.brandingSettings.channel.keywords
+              : "",
+          };
+        })
       )
       .reduce((a, b) => a.concat(b), []);
 
@@ -136,11 +168,18 @@ export class MainService {
     const videoBasicInformation = videosFromApi.items
       .filter((v) => v.id.videoId)
       .map((v) => {
+        if (!v.snippet.publishedAt)
+          return {
+            thumbnail: v.snippet.thumbnails.high.url,
+            id: v.id.videoId,
+            title: v.snippet.title,
+            date: new Date().toString(),
+          };
         return {
           thumbnail: v.snippet.thumbnails.high.url,
           id: v.id.videoId,
           title: v.snippet.title,
-          publicAt: v.snippet.publishedAt,
+          publicAt: new Date(v.snippet.publishedAt),
           date: new Date().toString(),
         };
       });
@@ -164,7 +203,7 @@ export class MainService {
       thumbnail: string;
       id: string;
       title: string;
-      publicAt: string;
+      publicAt?: Date;
       date: string;
     }[]
   ): Promise<IVideo[]> {
@@ -176,8 +215,8 @@ export class MainService {
     while (index < idEndpoint.length) {
       console.log(Math.floor(index / 50) + 1 + " loop");
       let endPoint = idEndpoint.slice(index, index + 50);
-      const IVideoFromApi = await this.requestIVideoFromApi(endPoint);
-      videosInformationFromApi = [...videosInformationFromApi, IVideoFromApi];
+      const videoFromApi = await this.requestIVideoFromApi(endPoint);
+      videosInformationFromApi = [...videosInformationFromApi, videoFromApi];
       index += 50;
     }
 
@@ -192,35 +231,25 @@ export class MainService {
         views: "",
         commentCount: "",
       };
-      let videoDescription: VideoDescription = { description: "", tags: [] };
-      const videosStatisticInformation = videoList.find(
-        (vStatistics) => vBasic.id === vStatistics.id
-      );
-      const videoDescriptionInformation = videoList.find(
-        (vDescription) => vBasic.id === vDescription.id
-      );
+      let videoDescription: VideoDescription = {
+        description: "",
+        tags: [],
+        madeForKids: false,
+        duration: "",
+      };
+      const videosData = videoList.find((v) => vBasic.id === v.id);
 
       videoStatistic = {
-        likes: videosStatisticInformation
-          ? videosStatisticInformation.statistics.likeCount
-          : "-1",
-        dislikes: videosStatisticInformation
-          ? videosStatisticInformation.statistics.dislikeCount
-          : "-1",
-        views: videosStatisticInformation
-          ? videosStatisticInformation.statistics.viewCount
-          : "-1",
-        commentCount: videosStatisticInformation
-          ? videosStatisticInformation.statistics.commentCount
-          : "-1",
+        likes: videosData ? videosData.statistics.likeCount : "-1",
+        dislikes: videosData ? videosData.statistics.dislikeCount : "-1",
+        views: videosData ? videosData.statistics.viewCount : "-1",
+        commentCount: videosData ? videosData.statistics.commentCount : "-1",
       };
       videoDescription = {
-        description: videoDescriptionInformation
-          ? videoDescriptionInformation.snippet.description
-          : "",
-        tags: videoDescriptionInformation
-          ? videoDescriptionInformation.snippet.tags
-          : [],
+        description: videosData ? videosData.snippet.description : "",
+        tags: videosData ? videosData.snippet.tags : [],
+        madeForKids: videosData ? videosData.status.madeForKids : false,
+        duration: videosData ? videosData.contentDetails.duration : "",
       };
       return {
         ...vBasic,
@@ -295,6 +324,8 @@ export class MainService {
         days: video.days,
         description: video.description,
         tags: video.tags,
+        madeForKids: video.madeForKids,
+        duration: video.duration,
         views: `${views}|${video.views}`,
         date: `${date}|${new Date().toString()}`,
       };
@@ -315,7 +346,7 @@ export class MainService {
       let { views, subscribe, numberVideos, date } = oldChannelStatistics;
 
       return {
-        ...oldChannelStatistics,
+        ...p,
         views: `${views}|${p.views}`,
         subscribe: `${subscribe}|${p.subscribe}`,
         numberVideos: `${numberVideos}|${p.numberVideos}`,

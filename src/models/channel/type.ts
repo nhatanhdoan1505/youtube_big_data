@@ -1,4 +1,4 @@
-export interface IChannel {
+export interface IChannelBaseInformation {
   label?: string;
   urlChannel: string;
   id: string;
@@ -8,6 +8,13 @@ export interface IChannel {
   numberVideos: string;
   date: string;
   channelThumbnail: string;
+  bannerExternalUrl: string;
+  description: string;
+  publishedAt?: Date;
+  tags: string;
+}
+
+export interface IChannel extends IChannelBaseInformation {
   videoList: IVideo[];
 }
 
@@ -15,13 +22,15 @@ export interface IVideo extends VideoStatistic, VideoDescription {
   thumbnail: string;
   id: string;
   title: string;
-  publicAt: string;
+  publicAt?: Date;
   days: number;
   date: string;
 }
 
 export interface VideoDescription {
   description: string;
+  madeForKids: boolean;
+  duration: string;
   tags: string[];
 }
 export interface VideoStatistic {

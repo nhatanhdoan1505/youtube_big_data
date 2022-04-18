@@ -59,7 +59,7 @@ export class YoutubeService {
     for (let i = 0; i < this.API_KEYs.length; i++) {
       try {
         response = await axios.get(
-          `https://www.googleapis.com/youtube/v3/channels?part=statistics&part=snippet${idEndpoint}&key=${this.API_KEYs[i]}`
+          `https://www.googleapis.com/youtube/v3/channels?part=statistics&part=snippet&part=brandingSettings${idEndpoint}&key=${this.API_KEYs[i]}`
         );
       } catch (error) {
         response = error;
@@ -104,7 +104,7 @@ export class YoutubeService {
     let response: any;
     for (let i = 0; i < this.API_KEYs.length; i++) {
       // console.log("QUERY VIDEO STATISTIC", i);
-      url = `https://youtube.googleapis.com/youtube/v3/videos?part=snippet&part=statistics${idEndpoint}&key=${this.API_KEYs[i]}`;
+      url = `https://youtube.googleapis.com/youtube/v3/videos?part=snippet&part=statistics&part=status&part=contentDetails${idEndpoint}&key=${this.API_KEYs[i]}`;
       try {
         response = await axios.get(url);
       } catch (error) {

@@ -45,23 +45,24 @@ export interface ItemsEntity {
   id: string;
 }
 
-// // Channel InforApi
+// // Channel InformationApi
 export interface ChannelInformationApi {
   kind: string;
   etag: string;
   pageInfo: PageInfo;
-  items?: ItemsEntityChannel[] | null;
+  items?: ItemsEntity[] | null;
 }
 export interface PageInfo {
   totalResults: number;
   resultsPerPage: number;
 }
-export interface ItemsEntityChannel {
+export interface ItemsEntity {
   kind: string;
   etag: string;
   id: string;
   snippet: Snippet;
   statistics: Statistics;
+  brandingSettings: BrandingSettings;
 }
 export interface Snippet {
   title: string;
@@ -70,7 +71,6 @@ export interface Snippet {
   publishedAt: string;
   thumbnails: Thumbnails;
   localized: Localized;
-  country: string;
 }
 export interface Thumbnails {
   default: DefaultOrMediumOrHigh;
@@ -92,7 +92,20 @@ export interface Statistics {
   hiddenSubscriberCount: boolean;
   videoCount: string;
 }
-
+export interface BrandingSettings {
+  channel: Channel;
+  image: Image;
+}
+export interface Channel {
+  title: string;
+  description: string;
+  keywords: string;
+  moderateComments: boolean;
+  unsubscribedTrailer: string;
+}
+export interface Image {
+  bannerExternalUrl: string;
+}
 
 // Video From API
 export interface VideoListFromApi {
@@ -149,19 +162,10 @@ export interface ItemsEntity {
   kind: string;
   etag: string;
   id: string;
-  statistics: Statistics;
   snippet: Snippet;
-}
-export interface Statistics {
-  viewCount: string;
-  likeCount: string;
-  dislikeCount: string;
-  favoriteCount: string;
-  commentCount: string;
-}
-export interface PageInfo {
-  totalResults: number;
-  resultsPerPage: number;
+  contentDetails: ContentDetails;
+  status: Status;
+  statistics: Statistics;
 }
 export interface Snippet {
   publishedAt: string;
@@ -174,6 +178,7 @@ export interface Snippet {
   categoryId: string;
   liveBroadcastContent: string;
   localized: Localized;
+  defaultAudioLanguage: string;
 }
 export interface Thumbnails {
   default: DefaultOrMediumOrHighOrStandardOrMaxres;
@@ -190,6 +195,31 @@ export interface DefaultOrMediumOrHighOrStandardOrMaxres {
 export interface Localized {
   title: string;
   description: string;
+}
+export interface ContentDetails {
+  duration: string;
+  dimension: string;
+  definition: string;
+  caption: string;
+  licensedContent: boolean;
+  contentRating: ContentRating;
+  projection: string;
+}
+export interface ContentRating {}
+export interface Status {
+  uploadStatus: string;
+  privacyStatus: string;
+  license: string;
+  embeddable: boolean;
+  publicStatsViewable: boolean;
+  madeForKids: boolean;
+}
+export interface Statistics {
+  viewCount: string;
+  likeCount: string;
+  dislikeCount: string;
+  favoriteCount: string;
+  commentCount: string;
 }
 export interface PageInfo {
   totalResults: number;
@@ -1505,4 +1535,3 @@ export interface PageInfo {
 //   seconds: string;
 //   nanos: number;
 // }
-

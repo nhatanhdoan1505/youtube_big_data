@@ -108,5 +108,29 @@ export class Router {
     this.app.get("/api/channel/sort/total", (req, res) => {
       return this.channelController.getTotalSortChannels(req, res);
     });
+
+    this.app.get("/api/channel/videos/total/:id", (req, res) => {
+      return this.channelController.getTotalVideoOfChannel(req, res);
+    });
+
+    this.app.get("/api/channel/overview/:id", (req, res) => {
+      return this.channelController.getChannelOverview(req, res);
+    });
+
+    this.app.get("/api/channel/tagsList/:id", (req, res) => {
+      return this.channelController.getChannelTags(req, res);
+    });
+
+    this.app.post("/api/channel/videoList/:id/:pageNumber", (req, res) => {
+      return this.channelController.getChannelVideoList(req, res);
+    });
+
+    this.app.get("/api/channel/videoViewsDistribution/:id", (req, res) => {
+      return this.channelController.getVideoViewsDistribution(req, res);
+    });
+
+    this.app.get("/api/channel/videoDeleted/:id", (req, res) => {
+      return this.channelController.getVideoDeleted(req, res);
+    });
   }
 }

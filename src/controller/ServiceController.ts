@@ -116,22 +116,24 @@ export class ServiceController {
     let data = await this.channelService.filterChannel({});
     let i = 0;
     let newData: IChannel[];
+    data = data.slice(140);
 
     console.log(`TOTAL ${data.length} channel to update`);
     while (i < data.length) {
-      console.log(`Update ${i} -> ${i + 50}`);
+      console.log(`Update ${i} -> ${i + 20}`);
       newData = await this.mainService.scanOldChannelInformation(
-        data.slice(i, i + 50)
+        data.slice(i, i + 20)
       );
+      console.log(newData);
       const updateChannelPromise = newData.map((c) =>
         this.channelService.updateChannel({ id: c.id }, c)
       );
 
       console.log(`Successfully Update ${i} videos`);
-      console.log(`Updating!! ${i} -> ${i + 50}`);
+      console.log(`Updating!! ${i} -> ${i + 20}`);
 
       await Promise.all(updateChannelPromise);
-      i += 50;
+      i += 20;
     }
 
     console.log("DONE UPDATE CHANNEL INFORMATION");

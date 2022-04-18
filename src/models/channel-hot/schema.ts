@@ -15,11 +15,15 @@ export default mongoose.model(
     numberVideos: { type: Number },
     date: { type: String },
     channelThumbnail: { type: String },
+    bannerExternalUrl: { type: String },
     gapSubscribes: { type: Number },
     gapViews: { type: Number },
     gapNumberVideos: { type: Number },
     viewsHistory: { type: String },
     subscribesHistory: { type: String },
     numberVideosHistory: { type: String },
+    publishedAt: { type: Date, default: null },
+    description: { type: String, default: "" },
+    tags: { type: String, default: "" },
   })
 );

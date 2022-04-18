@@ -14,7 +14,11 @@ export default mongoose.model(
     title: { type: String },
     numberVideos: { type: String, default: "" },
     date: { type: String, default: "" },
-    channelThumbnail: { type: String },
+    channelThumbnail: { type: String, default: "" },
+    bannerExternalUrl: { type: String, default: "" },
+    publishedAt: { type: Date, default: null },
+    description: { type: String, default: "" },
+    tags: { type: String, default: "" },
     videoList: [
       {
         thumbnail: { type: String },
@@ -29,6 +33,8 @@ export default mongoose.model(
         date: { type: String, default: "" },
         description: { type: String, default: "" },
         tags: [{ type: String, default: null }],
+        madeForKids: { type: Boolean, default: false },
+        duration: { type: String, default: "" },
       },
     ],
   })

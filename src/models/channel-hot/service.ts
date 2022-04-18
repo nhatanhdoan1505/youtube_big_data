@@ -27,8 +27,8 @@ export class HotChannelService {
     }).lean();
   }
 
-  async queryHotChannel(query: any): Promise<any> {
-    return await HotChannel.aggregate(query);
+  async queryHotChannel(query: any, condition?: any): Promise<any> {
+    return await HotChannel.aggregate(query, condition);
   }
 
   async getTotalHotChannel(): Promise<number> {

@@ -2,7 +2,7 @@ export interface IHotVideo {
   thumbnail: string;
   id: string;
   title: string;
-  publicAt: string;
+  publicAt?: Date;
   days: number;
   likes: number;
   dislikes: number;
@@ -19,8 +19,21 @@ export interface IHotVideo {
   viewsHistory: string;
   likesHistory: string;
   dislikesHistory: string;
+  duration: number;
+  madeForKids: boolean;
   channelInformation: {
+    label?: string;
     urlChannel: string;
+    id: string;
+    subscribe: string;
+    views: string;
     title: string;
+    numberVideos: string;
+    date: string;
+    channelThumbnail: string;
+    bannerExternalUrl: string;
+    publishedAt?: Date;
+    description: string;
+    tags: string;
   };
 }

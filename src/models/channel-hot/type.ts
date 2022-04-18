@@ -14,4 +14,8 @@ export interface IHotChannel {
   viewsHistory: string;
   subscribesHistory: string;
   numberVideosHistory: string;
+  bannerExternalUrl: string;
+  publishedAt?: Date;
+  description: string;
+  tags: string;
 }

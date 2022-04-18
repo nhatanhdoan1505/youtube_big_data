@@ -27,8 +27,8 @@ export class HotVideoService {
     }).lean();
   }
 
-  async queryHotVideo(query: any): Promise<any> {
-    return await HotVideo.aggregate(query);
+  async queryHotVideo(query: any, options?: any): Promise<any> {
+    return await HotVideo.aggregate(query, options);
   }
 
   async getTotalHotVideo(): Promise<number> {
