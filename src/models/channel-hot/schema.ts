@@ -25,5 +25,6 @@ export default mongoose.model(
     publishedAt: { type: Date, default: null },
     description: { type: String, default: "" },
     tags: { type: String, default: "" },
+    averageUpload: { type: Number, default: null },
   })
 );

@@ -132,5 +132,77 @@ export class Router {
     this.app.get("/api/channel/videoDeleted/:id", (req, res) => {
       return this.channelController.getVideoDeleted(req, res);
     });
+
+    this.app.get("/api/videoTags/sort", (req, res) => {
+      return this.channelController.getVideoTagsSort(req, res);
+    });
+
+    this.app.post("/api/video/hashtag/total", (req, res) => {
+      return this.channelController.getTotalVideoByTag(req, res);
+    });
+
+    this.app.post("/api/video/hashtag/:pageNumber", (req, res) => {
+      return this.channelController.getVideoByTag(req, res);
+    });
+
+    this.app.get("/api/videoKeyword/sort", (req, res) => {
+      return this.channelController.getVideoKeywordsSort(req, res);
+    });
+
+    this.app.post("/api/video/keyword/total", (req, res) => {
+      return this.channelController.getTotalVideoByKeyword(req, res);
+    });
+
+    this.app.post("/api/video/keyword/:pageNumber", (req, res) => {
+      return this.channelController.getVideoByKeyword(req, res);
+    });
+
+    this.app.get("/api/video/duration/statistic", (req, res) => {
+      return this.channelController.getVideoDurationStatistics(req, res);
+    });
+
+    this.app.post("/api/video/duration/sort", (req, res) => {
+      return this.channelController.getVideoSortByDuration(req, res);
+    });
+
+    this.app.get("/api/video/views/statistic", (req, res) => {
+      return this.channelController.getVideoViewsStatistic(req, res);
+    });
+
+    this.app.post("/api/video/views/sort", (req, res) => {
+      return this.channelController.getVideoByViews(req, res);
+    });
+
+    this.app.get("/api/video/averageViews", (req, res) => {
+      return this.channelController.getViewsAverage(req, res);
+    });
+
+    this.app.get("/api/video/tags/statistic", (req, res) => {
+      return this.channelController.getVideoTagsStatistics(req, res);
+    });
+
+    this.app.post("/api/video/numberTags/sort", (req, res) => {
+      return this.channelController.getVideoByTagsNumber(req, res);
+    });
+
+    this.app.get("/api/channel/upload/statistic", (req, res) => {
+      return this.channelController.getChannelUploadStatistic(req, res);
+    });
+
+    this.app.post("/api/channel/upload/sort", (req, res) => {
+      return this.channelController.getChannelByUpload(req, res);
+    });
+
+    this.app.get("/api/channel/subscriber/statistic", (req, res) => {
+      return this.channelController.getChannelSubscriberStatistic(req, res);
+    });
+
+    this.app.get("/api/channel/averageSubscriber", (req, res) => {
+      return this.channelController.getSubscriberAverage(req, res);
+    });
+
+    this.app.post("/api/channel/subscriber/sort", (req, res) => {
+      return this.channelController.getChannelBySubscriber(req, res);
+    });
   }
 }

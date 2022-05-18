@@ -21,6 +21,7 @@ export interface IHotVideo {
   dislikesHistory: string;
   duration: number;
   madeForKids: boolean;
+  keywords: string[];
   channelInformation: {
     label?: string;
     urlChannel: string;

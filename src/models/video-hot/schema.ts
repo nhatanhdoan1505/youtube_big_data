@@ -28,6 +28,7 @@ export default mongoose.model(
     tags: [{ type: String, default: null }],
     duration: { type: Number, default: 0 },
     madeForKids: { type: Boolean, default: false },
+    keywords: [{ type: String, default: null }],
     channelInformation: {
       label: { type: String, default: "" },
       urlChannel: { type: String },

@@ -18,4 +18,5 @@ export interface IHotChannel {
   publishedAt?: Date;
   description: string;
   tags: string;
+  averageUpload: number;
 }

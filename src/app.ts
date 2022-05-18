@@ -12,6 +12,9 @@ import { UserController } from "./controller/UserController";
 import { CronJob } from "./cronJob";
 import fs from "fs";
 import { ChannelController } from "./controller/ChannelController";
+import { Server, Socket } from "socket.io";
+import http from "http";
+import { Listener } from "./module/listener";
 
 dotenv.config();
 
@@ -35,7 +38,7 @@ const main = async () => {
   await connectMongo();
 
   app.use(express.static(path.join(__dirname)));
-  app.use(cors("*"));
+  app.use(cors({ origin: "*" }));
   app.use(express.json());
   app.use(bodyParser.urlencoded({ extended: false }));
 
@@ -43,8 +46,24 @@ const main = async () => {
 
   // const cronJob = new CronJob(mainService);
   // cronJob.updateChannelStatistics();
+
   const port = process.env.PORT || 8080;
-  app.listen(port, () => console.log(`Server is listenning at port ${port}`));
+  const server = http.createServer(app);
+  server.listen(port, () => console.log(`Server is listening at port ${port}`));
+  const io = new Server(server, {
+    cookie: false,
+    allowEIO3: true,
+    serveClient: false,
+    cors: {
+      origin: "*",
+    },
+  });
+
+  const listener = new Listener(io);
+  io.on("connection", (socket: Socket) => {
+    console.log(`${socket.id} connected`);
+    listener.listen(socket);
+  });
 };
 
 main();

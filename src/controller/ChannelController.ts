@@ -1,3 +1,8 @@
+import {
+  queryChannelSubscriberStatistic,
+  queryVideoDurationViews,
+  queryVideoViewStatistic,
+} from "./../utils/common";
 import { ChannelService } from "../models/channel/service";
 import { HotVideoService } from "../models/video-hot/service";
 import { HotChannelService } from "../models/channel-hot/service";
@@ -6,7 +11,13 @@ import fs from "fs";
 import { IHotVideo } from "../models/video-hot/type";
 import * as moment from "moment";
 import { IHotChannel } from "models/channel-hot/type";
-import { queryVideoViewDistribution } from "../utils/common";
+import {
+  detectKeyword,
+  queryVideoDurationStatistic,
+  queryVideoViewDistribution,
+  queryUploadStatistic,
+} from "../utils/common";
+import { IChannel } from "models/channel/type";
 
 export class ChannelController {
   private channelService: ChannelService = new ChannelService();
@@ -107,12 +118,13 @@ export class ChannelController {
   }
 
   async getAllLabel(req, res) {
-    let labelList = await (
-      await this.channelService.filterChannel({})
-    ).map((c) => c.label);
-    labelList = [...new Set(labelList)];
+    let labelList = (
+      await this.hotChannelService.queryHotChannel([
+        { $group: { _id: "$label" } },
+      ])
+    ).map((c) => c._id);
 
-    return res.status(200).json({ status: "OK", data: labelList });
+    return res.status(200).json({ status: "OK", data: { labelList } });
   }
 
   async updateHotChannel(req, res) {
@@ -172,6 +184,10 @@ export class ChannelController {
         subscribesHistory,
         numberVideosHistory,
         publishedAt: new Date(publishedAt) ? new Date(publishedAt) : null,
+        averageUpload:
+          +numberVideos > 0
+            ? (Date.now() - publishedAt.getTime()) / 604800000 / +numberVideos
+            : null,
       };
     });
 
@@ -235,40 +251,67 @@ export class ChannelController {
 
   async updateHotVideo(req, res) {
     let channelList = await this.channelService.filterChannel({});
-    let videoList = channelList
-      .map((c) => {
-        let { videoList, ...channelInformation } = c;
-        return videoList.map((v) => ({
-          ...v,
-          channelInformation,
-        }));
-      })
-      .reduce((pre, next) => pre.concat(next));
+    let j = 0;
+    let channelData: IChannel[] = [];
+    while (j < channelList.length) {
+      channelData = channelList.slice(j, j + 50);
+      let videoList = channelData
+        .map((c) => {
+          let { videoList, ...channelInformation } = c;
+          return videoList.map((v) => ({
+            ...v,
+            channelInformation,
+          }));
+        })
+        .reduce((pre, next) => pre.concat(next));
 
-    // videoList = videoList.filter(
-    //   (v) =>
-    //     _.nth(v.views.split("|"), -1) != "-1" || v.views.split("|").length > 1
-    // );
+      let i = 0;
+      console.log(
+        `${Math.round(j / 50)} Loop|| TOTAL VIDEO SORT: ${videoList.length}`
+      );
+      while (i < videoList.length) {
+        console.log(`${Math.floor((i + 50) / 50)} loop`);
 
-    let i = 0;
-    console.log(`TOTAL VIDEO SORT: ${videoList.length}`);
-    while (i < videoList.length) {
-      console.log(`${Math.floor((i + 50) / 50)} loop`);
+        let data = videoList.slice(i, i + 100);
+        let videoData: IHotVideo[] = data.map((v) => {
+          let gapViews =
+            +_.nth(v.views.split("|"), -1) - +_.nth(v.views.split("|"), -2);
+          let gapLikes =
+            +_.nth(v.likes.split("|"), -1) - +_.nth(v.likes.split("|"), -2);
+          let gapDislikes =
+            +_.nth((v.dislikes.split("|"), -1)) -
+            +_.nth(v.dislikes.split("|"), -2);
+          let gapCommentsCount =
+            +_.nth(v.commentCount.split("|"), -1) -
+            +_.nth(v.commentCount.split("|"), 2);
 
-      let data = videoList.slice(i, i + 100);
-      let videoData: IHotVideo[] = data.map((v) => {
-        let gapViews =
-          +_.nth(v.views.split("|"), -1) - +_.nth(v.views.split("|"), -2);
-        let gapLikes =
-          +_.nth(v.likes.split("|"), -1) - +_.nth(v.likes.split("|"), -2);
-        let gapDislikes =
-          +_.nth((v.dislikes.split("|"), -1)) -
-          +_.nth(v.dislikes.split("|"), -2);
-        let gapCommentsCount =
-          +_.nth(v.commentCount.split("|"), -1) -
-          +_.nth(v.commentCount.split("|"), 2);
+          if (!v.publicAt)
+            return {
+              ...v,
+              likesHistory: v.likes,
+              dislikesHistory: v.dislikes,
+              commentCountHistory: v.commentCount,
+              viewsHistory: v.views,
+              views: +_.nth(v.views.split("|"), -1)
+                ? +_.nth(v.views.split("|"), -1)
+                : -1,
+              likes: +_.nth(v.likes.split("|"), -1)
+                ? +_.nth(v.likes.split("|"), -1)
+                : -1,
+              dislikes: -1,
+              commentCount: +_.nth(v.commentCount.split("|"), -1)
+                ? +_.nth(v.commentCount.split("|"), -1)
+                : -1,
+              gapViews: +gapViews ? gapViews : 0,
+              gapLikes: +gapLikes ? gapLikes : 0,
+              gapDislikes: gapDislikes ? gapDislikes : 0,
+              gapCommentsCount: gapCommentsCount ? gapCommentsCount : 0,
+              duration: moment.duration(v.duration).asSeconds()
+                ? moment.duration(v.duration).asSeconds()
+                : 0,
+              keywords: detectKeyword(v.title),
+            };
 
-        if (!v.publicAt)
           return {
             ...v,
             likesHistory: v.likes,
@@ -292,49 +335,27 @@ export class ChannelController {
             duration: moment.duration(v.duration).asSeconds()
               ? moment.duration(v.duration).asSeconds()
               : 0,
+            publicAt: new Date(v.publicAt),
+            keywords: detectKeyword(v.title),
           };
+        });
 
-        return {
-          ...v,
-          likesHistory: v.likes,
-          dislikesHistory: v.dislikes,
-          commentCountHistory: v.commentCount,
-          viewsHistory: v.views,
-          views: +_.nth(v.views.split("|"), -1)
-            ? +_.nth(v.views.split("|"), -1)
-            : -1,
-          likes: +_.nth(v.likes.split("|"), -1)
-            ? +_.nth(v.likes.split("|"), -1)
-            : -1,
-          dislikes: -1,
-          commentCount: +_.nth(v.commentCount.split("|"), -1)
-            ? +_.nth(v.commentCount.split("|"), -1)
-            : -1,
-          gapViews: +gapViews ? gapViews : 0,
-          gapLikes: +gapLikes ? gapLikes : 0,
-          gapDislikes: gapDislikes ? gapDislikes : 0,
-          gapCommentsCount: gapCommentsCount ? gapCommentsCount : 0,
-          duration: moment.duration(v.duration).asSeconds()
-            ? moment.duration(v.duration).asSeconds()
-            : 0,
-          publicAt: new Date(v.publicAt),
-        };
-      });
+        const saveDataPromise = videoData.map((v) =>
+          this.hotVideoService.updateHotVideo({ id: v.id }, v)
+        );
 
-      const saveDataPromise = videoData.map((v) =>
-        this.hotVideoService.updateHotVideo({ id: v.id }, v)
-      );
-
-      console.log(`Previous Loop Update ${i} videos`);
-      await Promise.all(saveDataPromise);
-      console.log(
-        "Channel Index:",
-        channelList.findIndex(
-          (c) => c.id === data[data.length - 1].channelInformation.id
-        )
-      );
-      console.log(`Updating ${i} -> ${i + 50}`);
-      i += 50;
+        console.log(`Previous Loop Update ${i} videos`);
+        await Promise.all(saveDataPromise);
+        console.log(
+          "Channel Index:",
+          channelList.findIndex(
+            (c) => c.id === data[data.length - 1].channelInformation.id
+          )
+        );
+        console.log(`Updating ${i} -> ${i + 50}`);
+        i += 50;
+      }
+      j += 50;
     }
 
     console.log(`DONE UPDATE HOT VIDEO`);
@@ -691,6 +712,580 @@ export class ChannelController {
       status: "OK",
       data: {
         videoList: videoDeleted,
+      },
+    });
+  }
+
+  async getVideoTagsSort(req, res) {
+    const tagsList = await this.hotVideoService.queryHotVideo(
+      [
+        {
+          $unwind: {
+            path: "$tags",
+          },
+        },
+        {
+          $group: {
+            _id: "$tags",
+            count: {
+              $sum: 1,
+            },
+          },
+        },
+        {
+          $sort: {
+            count: -1,
+          },
+        },
+        { $limit: 30 },
+      ],
+      { allowDiskUse: true }
+    );
+
+    return res.status(200).json({
+      status: "OK",
+      data: {
+        tagsList,
+      },
+    });
+  }
+
+  async getVideoByTag(req, res) {
+    if (!req.body.tag || !+req.params.pageNumber)
+      return res
+        .status(400)
+        .json({ status: "FAIL", msg: "Insufficient parameter" });
+
+    let pageNumber = +req.params.pageNumber;
+
+    let skipDocument = (pageNumber - 1) * 50;
+    const videoList = await this.hotVideoService.queryHotVideo(
+      [
+        { $match: { $expr: { $in: [req.body.tag, "$tags"] } } },
+        { $skip: skipDocument },
+        { $limit: 50 },
+      ],
+      { allowDiskUse: true }
+    );
+
+    return res.status(200).json({
+      status: "OK",
+      data: {
+        videoList,
+      },
+    });
+  }
+
+  async getTotalVideoByTag(req, res) {
+    if (!req.body.tag)
+      return res
+        .status(400)
+        .json({ status: "FAIL", msg: "Insufficient parameter" });
+
+    const totalVideos = (
+      await this.hotVideoService.queryHotVideo(
+        [
+          { $match: { $expr: { $in: [req.body.tag, "$tags"] } } },
+          { $group: { _id: null, count: { $sum: 1 } } },
+        ],
+        { allowDiskUse: true }
+      )
+    )[0].count;
+
+    const totalPage =
+      totalVideos % 50 !== 0 ? Math.ceil(totalVideos / 50) : totalVideos / 50;
+
+    return res.status(200).json({
+      status: "OK",
+      data: {
+        totalVideos,
+        totalPage,
+      },
+    });
+  }
+
+  async getTotalVideoByKeyword(req, res) {
+    if (!req.body.keyword)
+      return res
+        .status(400)
+        .json({ status: "FAIL", msg: "Insufficient parameter" });
+
+    const totalVideos = (
+      await this.hotVideoService.queryHotVideo(
+        [
+          { $match: { $expr: { $in: [req.body.keyword, "$keywords"] } } },
+          { $group: { _id: null, count: { $sum: 1 } } },
+        ],
+        { allowDiskUse: true }
+      )
+    )[0].count;
+
+    const totalPage =
+      totalVideos % 50 !== 0 ? Math.ceil(totalVideos / 50) : totalVideos / 50;
+
+    return res.status(200).json({
+      status: "OK",
+      data: {
+        totalVideos,
+        totalPage,
+      },
+    });
+  }
+
+  async getVideoByKeyword(req, res) {
+    if (!req.body.keyword || !+req.params.pageNumber)
+      return res
+        .status(400)
+        .json({ status: "FAIL", msg: "Insufficient parameter" });
+
+    let pageNumber = +req.params.pageNumber;
+
+    let skipDocument = (pageNumber - 1) * 50;
+    const videoList = await this.hotVideoService.queryHotVideo(
+      [
+        { $match: { $expr: { $in: [req.body.keyword, "$keywords"] } } },
+        { $skip: skipDocument },
+        { $limit: 50 },
+      ],
+      { allowDiskUse: true }
+    );
+
+    return res.status(200).json({
+      status: "OK",
+      data: {
+        videoList,
+      },
+    });
+  }
+
+  async getVideoKeywordsSort(req, res) {
+    const keywordList = await this.hotVideoService.queryHotVideo(
+      [
+        {
+          $unwind: {
+            path: "$keywords",
+          },
+        },
+        {
+          $group: {
+            _id: "$keywords",
+            count: {
+              $sum: 1,
+            },
+          },
+        },
+        {
+          $sort: {
+            count: -1,
+          },
+        },
+        { $limit: 30 },
+      ],
+      { allowDiskUse: true }
+    );
+
+    return res.status(200).json({
+      status: "OK",
+      data: {
+        keywordList,
+      },
+    });
+  }
+
+  async getVideoDurationStatistics(req, res) {
+    const query = queryVideoDurationStatistic();
+    const videoDurationStatistics = (
+      await this.hotVideoService.queryHotVideo([query], { allowDiskUse: true })
+    )[0];
+
+    let averageVideoViewList: number[] = [];
+    let recommendedDuration;
+    let averageViewsRecommendedDuration;
+    let _videoDurationStatistics = { ...videoDurationStatistics };
+    for (let i in videoDurationStatistics) {
+      videoDurationStatistics[i].length > 0 &&
+        +videoDurationStatistics[i][0].averageViews &&
+        averageVideoViewList.push(+videoDurationStatistics[i][0].averageViews);
+
+      videoDurationStatistics[i] =
+        videoDurationStatistics[i].length === 0
+          ? 0
+          : videoDurationStatistics[i][0].count;
+    }
+    averageViewsRecommendedDuration = averageVideoViewList.sort().reverse()[0];
+    for (let i in _videoDurationStatistics) {
+      if (
+        +_videoDurationStatistics[i][0].averageViews ===
+        averageViewsRecommendedDuration
+      ) {
+        recommendedDuration = i;
+        break;
+      }
+    }
+
+    return res.status(200).json({
+      status: "OK",
+      data: {
+        videoDurationStatistics,
+        recommendedDuration,
+        averageViewsRecommendedDuration,
+      },
+    });
+  }
+
+  async getVideoViewsStatistic(req, res) {
+    const query = queryVideoViewStatistic();
+    const videoViews = (
+      await this.hotVideoService.queryHotVideo([query], { allowDiskUse: true })
+    )[0];
+
+    for (let i in videoViews) {
+      videoViews[i] = videoViews[i].length === 0 ? 0 : videoViews[i][0].count;
+    }
+
+    return res.status(200).json({
+      status: "OK",
+      data: {
+        videoViews,
+      },
+    });
+  }
+
+  async getViewsAverage(req, res) {
+    let averageVideoView = (
+      await this.hotVideoService.queryHotVideo(
+        [
+          { $match: { views: { $gt: 0 } } },
+          { $group: { _id: null, average: { $avg: "$views" } } },
+        ],
+        { allowDiskUse: true }
+      )
+    )[0].average;
+
+    return res.status(200).json({
+      status: "OK",
+      data: {
+        averageVideoView: Math.trunc(averageVideoView),
+      },
+    });
+  }
+
+  async getVideoSortByDuration(req, res) {
+    if (!req.body.duration)
+      return res
+        .status(400)
+        .json({ status: "FAIL", msg: "Insufficient parameter" });
+
+    let duration = +req.body.duration;
+    let videoList = await this.hotVideoService.queryHotVideo(
+      [
+        {
+          $match: {
+            $and: [
+              { duration: { $lte: duration + 9 } },
+              { duration: { $gte: duration } },
+            ],
+          },
+        },
+        { $sort: { views: -1 } },
+        { $limit: 50 },
+      ],
+      { allowDiskUse: true }
+    );
+
+    return res.status(200).json({
+      status: "OK",
+      data: {
+        videoList,
+      },
+    });
+  }
+
+  async getVideoByViews(req, res) {
+    if (!req.body.viewScope || !Array.isArray(req.body.viewScope))
+      return res
+        .status(400)
+        .json({ status: "FAIL", msg: "Insufficient parameter" });
+
+    let { viewScope } = req.body as { viewScope: number[] };
+    let videoList = viewScope[1]
+      ? await this.hotVideoService.queryHotVideo(
+          [
+            {
+              $match: {
+                $and: [
+                  { views: { $lt: viewScope[1] } },
+                  { views: { $gte: viewScope[0] } },
+                ],
+              },
+            },
+            { $sort: { views: -1 } },
+            { $limit: 50 },
+          ],
+          { allowDiskUse: true }
+        )
+      : await this.hotVideoService.queryHotVideo(
+          [
+            {
+              $match: {
+                $and: [{ views: { $gte: viewScope[0] } }],
+              },
+            },
+            { $sort: { views: -1 } },
+            { $limit: 50 },
+          ],
+          { allowDiskUse: true }
+        );
+
+    return res.status(200).json({
+      status: "OK",
+      data: {
+        videoList,
+      },
+    });
+  }
+
+  async getVideoTagsStatistics(req, res) {
+    let videoTagsStatistics = await this.hotVideoService.queryHotVideo(
+      [
+        {
+          $addFields: {
+            numberTags: { $size: "$tags" },
+          },
+        },
+        {
+          $group: {
+            _id: "$numberTags",
+            count: {
+              $sum: 1,
+            },
+            averageViews: { $avg: "$views" },
+          },
+        },
+      ],
+      {
+        allowDiskUse: true,
+      }
+    );
+
+    let averageViewsRecommendedTags = _.max(
+      videoTagsStatistics.map((v) => +v.averageViews)
+    );
+    videoTagsStatistics = videoTagsStatistics.sort((a, b) => +a._id - +b._id);
+    let recommendedTags = videoTagsStatistics.find(
+      (v) => +v.averageViews === averageViewsRecommendedTags
+    )._id;
+
+    videoTagsStatistics = _.chain(videoTagsStatistics)
+      .keyBy("_id")
+      .mapValues("count")
+      .value();
+
+    return res.status(200).json({
+      status: "OK",
+      data: {
+        videoTagsStatistics,
+        averageViewsRecommendedTags,
+        recommendedTags,
+      },
+    });
+  }
+
+  async getVideoByTagsNumber(req, res) {
+    if (!req.body.numberTags)
+      return res
+        .status(400)
+        .json({ status: "FAIL", msg: "Insufficient parameter" });
+
+    let { numberTags } = req.body as { numberTags: number };
+    let videoList = await this.hotVideoService.queryHotVideo(
+      [
+        {
+          $match: {
+            tags: { $size: +numberTags },
+          },
+        },
+        { $sort: { views: -1 } },
+        { $limit: 50 },
+      ],
+      { allowDiskUse: true }
+    );
+
+    return res.status(200).json({
+      status: "OK",
+      data: {
+        videoList,
+      },
+    });
+  }
+
+  async getChannelUploadStatistic(req, res) {
+    let channelUploadStatistics = (
+      await this.hotChannelService.queryHotChannel(queryUploadStatistic, {
+        allowDiskUse: true,
+      })
+    )[0];
+    let channelUploadAverage = {};
+    for (let i in channelUploadStatistics) {
+      channelUploadAverage[i] =
+        channelUploadStatistics[i]
+          .map((c: any) => +c.totalUpload)
+          .reduce((a, b) => a + b, 0) /
+        channelUploadStatistics[i]
+          .map((c: any) => +c.count)
+          .reduce((a, b) => a + b, 0);
+
+      channelUploadStatistics[i] = _.chain(channelUploadStatistics[i])
+        .keyBy("_id")
+        .mapValues("count")
+        .value();
+    }
+
+    const channelUploadAverageGap = [2, 4, 6, 8, 10, 11];
+    for (let i in channelUploadStatistics) {
+      let differences = _.difference(
+        channelUploadAverageGap,
+        Object.keys(channelUploadStatistics[i]).map((v) => +v)
+      );
+      differences.map((e) => (channelUploadStatistics[i][e] = 0));
+    }
+
+    return res.status(200).json({
+      status: "OK",
+      data: {
+        channelUploadStatistics,
+        channelUploadAverage,
+      },
+    });
+  }
+
+  async getChannelByUpload(req, res) {
+    if (
+      !req.body.subscribersGap ||
+      !req.body.uploadGap ||
+      !Array.isArray(req.body.uploadGap) ||
+      !Array.isArray(req.body.subscribersGap)
+    )
+      return res
+        .status(400)
+        .json({ status: "FAIL", msg: "Insufficient parameter" });
+
+    const { subscribersGap, uploadGap } = req.body as {
+      subscribersGap: number[];
+      uploadGap: number[];
+    };
+    const subscribeCondition =
+      subscribersGap.length > 1
+        ? [
+            { subscribe: { $gte: subscribersGap[0] } },
+            { subscribe: { $lt: subscribersGap[1] } },
+          ]
+        : [{ subscribe: { $gt: subscribersGap[0] } }];
+
+    const uploadGapCondition =
+      uploadGap.length > 1
+        ? [
+            { averageUpload: { $gte: uploadGap[0] } },
+            { averageUpload: { $lt: uploadGap[1] } },
+          ]
+        : [{ averageUpload: { $gt: uploadGap[0] } }];
+
+    const channelList = await this.hotChannelService.queryHotChannel([
+      {
+        $match: {
+          $and: [...subscribeCondition, ...uploadGapCondition],
+        },
+      },
+    ]);
+
+    return res.status(200).json({
+      status: "OK",
+      data: {
+        channelList,
+      },
+    });
+  }
+
+  async getChannelSubscriberStatistic(req, res) {
+    const query = queryChannelSubscriberStatistic();
+    const channelSubscriber = (
+      await this.hotChannelService.queryHotChannel([query], {
+        allowDiskUse: true,
+      })
+    )[0];
+
+    for (let i in channelSubscriber) {
+      channelSubscriber[i] =
+        channelSubscriber[i].length === 0 ? 0 : channelSubscriber[i][0].count;
+    }
+
+    return res.status(200).json({
+      status: "OK",
+      data: {
+        channelSubscriber,
+      },
+    });
+  }
+
+  async getSubscriberAverage(req, res) {
+    let averageChannelSubscriber = (
+      await this.hotChannelService.queryHotChannel(
+        [
+          { $match: { subscribe: { $gt: 0 } } },
+          { $group: { _id: null, average: { $avg: "$subscribe" } } },
+        ],
+        { allowDiskUse: true }
+      )
+    )[0].average;
+
+    return res.status(200).json({
+      status: "OK",
+      data: {
+        averageChannelSubscriber: Math.trunc(averageChannelSubscriber),
+      },
+    });
+  }
+
+  async getChannelBySubscriber(req, res) {
+    if (!req.body.subscribeScope || !Array.isArray(req.body.subscribeScope))
+      return res
+        .status(400)
+        .json({ status: "FAIL", msg: "Insufficient parameter" });
+
+    let { subscribeScope } = req.body as { subscribeScope: number[] };
+    let channelList = subscribeScope[1]
+      ? await this.hotChannelService.queryHotChannel(
+          [
+            {
+              $match: {
+                $and: [
+                  { subscribe: { $lt: subscribeScope[1] } },
+                  { subscribe: { $gte: subscribeScope[0] } },
+                ],
+              },
+            },
+            { $sort: { subscribe: -1 } },
+            { $limit: 50 },
+          ],
+          { allowDiskUse: true }
+        )
+      : await this.hotChannelService.queryHotChannel(
+          [
+            {
+              $match: {
+                $and: [{ subscribe: { $gte: subscribeScope[0] } }],
+              },
+            },
+            { $sort: { subscribe: -1 } },
+            { $limit: 50 },
+          ],
+          { allowDiskUse: true }
+        );
+
+    return res.status(200).json({
+      status: "OK",
+      data: {
+        channelList,
       },
     });
   }

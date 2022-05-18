@@ -116,7 +116,7 @@ export class ServiceController {
     let data = await this.channelService.filterChannel({});
     let i = 0;
     let newData: IChannel[];
-    data = data.slice(140);
+    data = data.slice(0, 220);
 
     console.log(`TOTAL ${data.length} channel to update`);
     while (i < data.length) {
