@@ -7,9 +7,12 @@ export default mongoose.model(
   new schema({
     _id: { type: Types.ObjectId },
     email: { type: String },
-    password: { type: String },
+    name: { type: String },
     isAdmin: { type: Boolean, default: false },
-    isVerified: { type: Boolean, default: false },
-    verifiedCode: { type: String },
+    photoUrl: { type: String },
+    channel: { type: Object, default: null },
+    competitorChannel: [{ type: Object }],
+    uid: { type: String },
+    payment: [{ type: Object, default: null }],
   })
 );

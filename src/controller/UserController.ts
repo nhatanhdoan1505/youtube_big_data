@@ -1,126 +1,98 @@
-import { IUser } from "../models/user/type";
 import { UserService } from "../models/user/service";
-import { AuthenticationService } from "../utils/AuthenticationService";
+import * as _ from "lodash";
+import { HotChannelService } from "../models/channel-hot/service";
+import { MainService } from "../utils/MainService";
+import { IChannelBaseInformation } from "models/channel/type";
+import { ProfileService } from "../utils/ProfileService";
+import { IPayment, IUser } from "../models/user/type";
 
 export class UserController {
   private userService: UserService = new UserService();
-  private authService: AuthenticationService = new AuthenticationService();
+  private hotChannelService: HotChannelService = new HotChannelService();
+  private mainService: MainService = new MainService();
+  private profileService: ProfileService = new ProfileService();
 
-  async signUp(req, res) {
-    if (!req.body.email || !req.body.password)
+  async updateUser(req, res) {
+    if (!req.body.user || !req.body.user.uid)
       return res
         .status(400)
-        .json({ status: "FAIL", msg: "Insufficient paramester" });
+        .json({ status: "FAIL", msg: "Insufficient parameter" });
 
-    const isExistUser = await this.authService.checkExistEmail(req.body.email);
-    if (!isExistUser)
+    const { name, photoUrl, uid, email } = req.body.user;
+
+    let user = await this.userService.findUser({ uid });
+
+    if (user) {
+      await this.userService.updateUser({ uid }, { photoUrl, name });
+      return res.status(200).json({ status: "OK", data: {} });
+    }
+
+    await this.userService.createUser({ name, photoUrl, uid, email });
+    return res.status(200).json({ status: "OK", data: {} });
+  }
+
+  async getUserProfile(req, res) {
+    if (!req.user)
       return res
         .status(400)
-        .json({ status: "FAIL", msg: "This email is already in use" });
+        .json({ status: "FAIL", msg: "Insufficient parameter" });
 
-    if (req.body.password.length < 6)
-      return res.status(400).json({
-        status: "FAIL",
-        msg: "Password must has 6 characters at least",
-      });
-
-    const verifiedCode = Math.floor(Math.random() * 10000);
-    const bcryptPassword = await this.authService.bcryptPassword(
-      req.body.password
-    );
-    await Promise.all([
-      this.authService.sendEmail(req.body.email, verifiedCode.toString()),
-      this.userService.createUser({
-        email: req.body.email,
-        password: bcryptPassword,
-        verifiedCode: verifiedCode.toString(),
-      }),
+    let user: IUser[] = await this.userService.queryUser([
+      { $match: { uid: req.user.uid } },
     ]);
 
+    if (user.length === 0)
+      return res
+        .status(400)
+        .json({ status: "FAIL", msg: "Insufficient parameter" });
+
+    let userProfile = user[0];
+
+    let { uid, ...userData } = userProfile;
+    const { payment } = userProfile;
+    let isPremium = false;
+    if (payment.length > 0 && _.last(payment)) {
+      let lastPayment: IPayment = _.last(payment);
+      let extendDay = lastPayment.title === "MONTHLY" ? 30 : 365;
+      let expired = new Date(
+        lastPayment.date.getTime() + extendDay * 24 * 60 * 60 * 1000
+      );
+      isPremium = expired.getTime() >= Date.now() ? true : false;
+    }
+
     return res
       .status(200)
-      .json({ status: "SUCCESS", msg: "Verify Code for register" });
+      .json({ status: "OK", data: { userData, isPremium } });
   }
 
-  async verifiedCode(req, res) {
-    if (!req.body.email || !req.body.verifiedCode)
+  async updateUserProfile(req, res) {
+    if (
+      !req.body.channel ||
+      (!req.body.competitorChannel && !_.isArray(req.body.competitorChannel))
+    )
       return res
         .status(400)
-        .json({ status: "FAIL", msg: "Insufficient paramester" });
+        .json({ status: "FAIL", msg: "Insufficient parameter" });
 
-    const userData = await this.userService.findUser({ email: req.body.email });
-    if (!userData)
-      return res
-        .status(400)
-        .json({ status: "FAIL", msg: "This email is not exist" });
+    let { channel, competitorChannel } = req.body;
 
-    if (userData.verifiedCode !== req.body.verifiedCode)
-      return res
-        .status(400)
-        .json({ status: "FAIL", msg: "Wrong Verify Code. Try Again" });
+    let userChannelData = await this.profileService.getChannelSave(channel);
+    let competitorChannelDataPromise = competitorChannel.map((c) =>
+      this.profileService.getChannelSave(c.toString())
+    );
+    let competitorChannelData = (
+      await Promise.all(competitorChannelDataPromise)
+    ).filter((c) => c);
 
     await this.userService.updateUser(
-      { email: req.body.email },
-      { ...userData, isVerified: true }
+      { uid: req.user.uid },
+      {
+        channel: userChannelData ? userChannelData : req.user.channel,
+        competitorChannel: competitorChannelData,
+      }
     );
-
     return res
       .status(200)
-      .json({ status: "SUCCESS", msg: "Sign Up successfully" });
-  }
-
-  async signIn(req, res) {
-    if (!req.body.email || !req.body.password)
-      return res
-        .status(400)
-        .json({ status: "FAIL", msg: "Insufficient paramester" });
-
-    const userData = await this.userService.findUser({ email: req.body.email });
-    if (!userData)
-      return res
-        .status(400)
-        .json({ status: "FAIL", msg: "Email is not exist" });
-
-    if (!userData.isVerified)
-      return res
-        .status(400)
-        .json({ status: "FAIL", msg: "This account does not verify" });
-
-    const verifyPassword = await this.authService.verifyPassword(
-      req.body.password,
-      userData.password
-    );
-
-    if (!verifyPassword)
-      return res.status(400).json({ status: "FAIL", msg: "Wrong password" });
-
-    const token = this.authService.createToken({
-      _id: userData._id.toString(),
-    });
-
-    return res
-      .status(200)
-      .json({ status: "SUCCESS", msg: "Login successfully", data: { token } });
-  }
-
-  async isAdmin(req, res) {
-    if (!req.body.token)
-      return res
-        .status(400)
-        .json({ status: "Fail", msg: "Insufficient paramester" });
-
-    try {
-      const decodeToken: any = await this.authService.verifyToken(
-        req.body.token
-      );
-      const { _id } = decodeToken;
-      const userData = await this.userService.findUser({ _id });
-
-      if (!userData && !userData.isAdmin)
-        return res.status(200).json({ status: "OK", data: { isAdmin: false } });
-      return res.status(200).json({ status: "OK", data: { isAdmin: true } });
-    } catch (error) {
-      return res.status(200).json({ status: "OK", data: { isAdmin: false } });
-    }
+      .json({ status: "OK", data: { userChannelData, competitorChannelData } });
   }
 }

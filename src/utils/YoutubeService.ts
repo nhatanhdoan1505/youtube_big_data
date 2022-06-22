@@ -1,11 +1,12 @@
+import fs from "fs";
 import axios, { AxiosResponse } from "axios";
 export class YoutubeService {
   private API_KEYs: string[] = [];
   private INITIAL_KEY: string[] = [];
-
-  constructor(API_KEYs: string[]) {
-    this.API_KEYs = [...API_KEYs];
-    this.INITIAL_KEY = [...API_KEYs];
+  private apiKey = fs.readFileSync("apiKey.txt", { encoding: "utf-8" });
+  constructor() {
+    this.API_KEYs = [...this.apiKey.split(/\n/)];
+    this.INITIAL_KEY = [...this.apiKey.split(/\n/)];
   }
 
   getAllKey() {

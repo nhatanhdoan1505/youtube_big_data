@@ -1,23 +1,19 @@
 import { ServiceController } from "./controller/ServiceController";
 import { UserController } from "./controller/UserController";
 import { ChannelController } from "./controller/ChannelController";
+import { VideoController } from "./controller/VideoController";
+import { Middleware } from "./middleware/Authorization";
 
 export class Router {
   private app;
-  private serviceController: ServiceController;
-  private userController: UserController;
-  private channelController: ChannelController;
+  private serviceController = new ServiceController();
+  private userController = new UserController();
+  private channelController = new ChannelController();
+  private videoController = new VideoController();
+  private middleware = new Middleware();
 
-  constructor(
-    app,
-    serviceController: ServiceController,
-    userController: UserController,
-    channelController: ChannelController
-  ) {
+  constructor(app) {
     this.app = app;
-    this.serviceController = serviceController;
-    this.userController = userController;
-    this.channelController = channelController;
   }
 
   route() {
@@ -25,21 +21,25 @@ export class Router {
       return this.channelController.refresh(req, res);
     });
 
-    this.app.post("/api/auth/sign_up", (req, res) => {
-      return this.userController.signUp(req, res);
+    this.app.post("/api/user", (req, res) => {
+      return this.userController.updateUser(req, res);
     });
 
-    this.app.post("/api/auth/verifyCode", (req, res) => {
-      return this.userController.verifiedCode(req, res);
-    });
+    this.app.get(
+      "/api/user/profile",
+      this.middleware.authorization.bind(this.middleware),
+      (req, res) => {
+        return this.userController.getUserProfile(req, res);
+      }
+    );
 
-    this.app.post("/api/auth/sign_in", (req, res) => {
-      return this.userController.signIn(req, res);
-    });
-
-    this.app.post("/api/auth/isAdmin", (req, res) => {
-      return this.userController.isAdmin(req, res);
-    });
+    this.app.post(
+      "/api/user/profile",
+      this.middleware.authorization.bind(this.middleware),
+      (req, res) => {
+        return this.userController.updateUserProfile(req, res);
+      }
+    );
 
     this.app.post("/api/service/getChannel", (req, res) => {
       return this.serviceController.getChannelInformation(req, res);
@@ -77,7 +77,7 @@ export class Router {
       return this.channelController.getChannelFromDBById(req, res);
     });
 
-    this.app.delete("/api/channel/:id", (req, res) => {
+    this.app.delete("/api/channel/duplicate", (req, res) => {
       return this.channelController.deleteChannel(req, res);
     });
 
@@ -98,12 +98,16 @@ export class Router {
     });
 
     this.app.post("/api/video/sort/:pageNumber", (req, res) => {
-      return this.channelController.getSortVideos(req, res);
+      return this.videoController.getSortVideos(req, res);
     });
 
-    this.app.get("/api/video/sort/total", (req, res) => {
-      return this.channelController.getTotalSortVideos(req, res);
-    });
+    this.app.get(
+      "/api/video/sort/total",
+      this.middleware.authorization.bind(this.middleware),
+      (req, res) => {
+        return this.videoController.getTotalSortVideos(req, res);
+      }
+    );
 
     this.app.get("/api/channel/sort/total", (req, res) => {
       return this.channelController.getTotalSortChannels(req, res);
@@ -134,55 +138,55 @@ export class Router {
     });
 
     this.app.get("/api/videoTags/sort", (req, res) => {
-      return this.channelController.getVideoTagsSort(req, res);
+      return this.videoController.getVideoTagsSort(req, res);
     });
 
     this.app.post("/api/video/hashtag/total", (req, res) => {
-      return this.channelController.getTotalVideoByTag(req, res);
+      return this.videoController.getTotalVideoByTag(req, res);
     });
 
     this.app.post("/api/video/hashtag/:pageNumber", (req, res) => {
-      return this.channelController.getVideoByTag(req, res);
+      return this.videoController.getVideoByTag(req, res);
     });
 
     this.app.get("/api/videoKeyword/sort", (req, res) => {
-      return this.channelController.getVideoKeywordsSort(req, res);
+      return this.videoController.getVideoKeywordsSort(req, res);
     });
 
     this.app.post("/api/video/keyword/total", (req, res) => {
-      return this.channelController.getTotalVideoByKeyword(req, res);
+      return this.videoController.getTotalVideoByKeyword(req, res);
     });
 
     this.app.post("/api/video/keyword/:pageNumber", (req, res) => {
-      return this.channelController.getVideoByKeyword(req, res);
+      return this.videoController.getVideoByKeyword(req, res);
     });
 
     this.app.get("/api/video/duration/statistic", (req, res) => {
-      return this.channelController.getVideoDurationStatistics(req, res);
+      return this.videoController.getVideoDurationStatistics(req, res);
     });
 
     this.app.post("/api/video/duration/sort", (req, res) => {
-      return this.channelController.getVideoSortByDuration(req, res);
+      return this.videoController.getVideoSortByDuration(req, res);
     });
 
     this.app.get("/api/video/views/statistic", (req, res) => {
-      return this.channelController.getVideoViewsStatistic(req, res);
+      return this.videoController.getVideoViewsStatistic(req, res);
     });
 
     this.app.post("/api/video/views/sort", (req, res) => {
-      return this.channelController.getVideoByViews(req, res);
+      return this.videoController.getVideoByViews(req, res);
     });
 
     this.app.get("/api/video/averageViews", (req, res) => {
-      return this.channelController.getViewsAverage(req, res);
+      return this.videoController.getViewsAverage(req, res);
     });
 
     this.app.get("/api/video/tags/statistic", (req, res) => {
-      return this.channelController.getVideoTagsStatistics(req, res);
+      return this.videoController.getVideoTagsStatistics(req, res);
     });
 
     this.app.post("/api/video/numberTags/sort", (req, res) => {
-      return this.channelController.getVideoByTagsNumber(req, res);
+      return this.videoController.getVideoByTagsNumber(req, res);
     });
 
     this.app.get("/api/channel/upload/statistic", (req, res) => {

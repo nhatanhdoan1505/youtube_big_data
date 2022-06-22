@@ -4,12 +4,8 @@ import { IChannel } from "models/channel/type";
 import fs from "fs";
 
 export class ServiceController {
-  private mainService: MainService;
+  private mainService: MainService = new MainService();
   private channelService: ChannelService = new ChannelService();
-
-  constructor(mainService: MainService) {
-    this.mainService = mainService;
-  }
 
   async test(req, res) {
     const ids = await (

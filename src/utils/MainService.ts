@@ -17,12 +17,7 @@ import {
 import { YoutubeService } from "./YoutubeService";
 
 export class MainService {
-  private youtubeService: YoutubeService;
-  private channelService: ChannelService = new ChannelService();
-
-  constructor(youtubeService: YoutubeService) {
-    this.youtubeService = youtubeService;
-  }
+  private youtubeService: YoutubeService = new YoutubeService();
 
   getAllKey() {
     return this.youtubeService.getAllKey();
@@ -68,6 +63,7 @@ export class MainService {
     }
 
     let channelBasicInformation = channelFromApiList
+      .filter((c) => c.items)
       .map((channel) =>
         channel.items.map((c) => {
           if (!c.snippet.publishedAt)

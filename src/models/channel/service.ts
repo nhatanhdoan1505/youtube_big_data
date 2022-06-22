@@ -26,7 +26,11 @@ export class ChannelService {
     }).lean();
   }
 
+  async queryChannel(query: any, condition?: any): Promise<any> {
+    return await Channel.aggregate(query, condition);
+  }
+
   async deleteChannel(query) {
-    return await Channel.deleteMany(query);
+    return await Channel.deleteOne(query);
   }
 }

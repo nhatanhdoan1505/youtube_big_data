@@ -1,45 +1,26 @@
-import express from "express";
-import path = require("path");
-import cors from "cors";
 import * as bodyParser from "body-parser";
-import { YoutubeService } from "./utils/YoutubeService";
-import { MainService } from "./utils/MainService";
-import { Router } from "./router";
-import { connectMongo } from "./mongo";
-import dotenv = require("dotenv");
-import { ServiceController } from "./controller/ServiceController";
-import { UserController } from "./controller/UserController";
-import { CronJob } from "./cronJob";
-import fs from "fs";
-import { ChannelController } from "./controller/ChannelController";
-import { Server, Socket } from "socket.io";
+import cors from "cors";
+import express from "express";
 import http from "http";
+import { Server, Socket } from "socket.io";
 import { Listener } from "./module/listener";
+import { connectMongo } from "./mongo";
+import { Router } from "./router";
+import path = require("path");
+import dotenv = require("dotenv");
 
 dotenv.config();
 
 const main = async () => {
   const app = express();
 
-  const apiKey = fs.readFileSync("apiKey.txt", { encoding: "utf-8" });
-  const youtubeService = new YoutubeService(apiKey.split(/\n/));
-  const mainService = new MainService(youtubeService);
-  const serviceController = new ServiceController(mainService);
-  const userController = new UserController();
-  const channelController = new ChannelController();
-
-  const router = new Router(
-    app,
-    serviceController,
-    userController,
-    channelController
-  );
+  const router = new Router(app);
 
   await connectMongo();
 
   app.use(express.static(path.join(__dirname)));
-  app.use(cors({ origin: "*" }));
   app.use(express.json());
+  app.use(cors({ credentials: true, origin: true }));
   app.use(bodyParser.urlencoded({ extended: false }));
 
   router.route();
@@ -61,7 +42,9 @@ const main = async () => {
 
   const listener = new Listener(io);
   io.on("connection", (socket: Socket) => {
-    console.log(`${socket.id} connected`);
+    // console.log(`${socket.id} connected`);
+    socket.emit("connection");
+
     listener.listen(socket);
   });
 };

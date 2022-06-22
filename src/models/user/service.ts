@@ -23,6 +23,10 @@ export class UserService {
     return await User.findOneAndUpdate(query, params, { new: true }).lean();
   }
 
+  async queryUser(query: any, options?: any): Promise<any> {
+    return await User.aggregate(query, options);
+  }
+
   async deleteUser(query) {
     return await User.deleteMany(query);
   }
