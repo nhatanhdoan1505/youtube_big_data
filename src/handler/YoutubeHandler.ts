@@ -387,7 +387,7 @@ export class YoutubeHandler {
           ])
         )[0].count;
 
-    let skip = 100;
+    let skip = 0;
     let data;
 
     this.total = totalData;
@@ -400,7 +400,12 @@ export class YoutubeHandler {
       numberWorked: this.numberWorked,
     });
 
-    while (skip <= totalData - 50) {
+    let numberLoop =
+      totalData % 50 === 0
+        ? Math.floor(totalData / 50)
+        : Math.floor(totalData / 50) + 1;
+    let j = 0;
+    while (j < numberLoop) {
       data = label
         ? await this.channelService.queryChannel([
             { $match: { label } },
@@ -437,6 +442,7 @@ export class YoutubeHandler {
         });
       }
       skip += 50;
+      j += 1;
     }
 
     this.serverReady();
