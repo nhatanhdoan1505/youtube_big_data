@@ -5,12 +5,14 @@ import { MainService } from "../utils/MainService";
 import { IChannelBaseInformation } from "models/channel/type";
 import { ProfileService } from "../utils/ProfileService";
 import { IPayment, IUser } from "../models/user/type";
+import { PaymentService } from "../utils/PaymentService";
 
 export class UserController {
   private userService: UserService = new UserService();
   private hotChannelService: HotChannelService = new HotChannelService();
   private mainService: MainService = new MainService();
   private profileService: ProfileService = new ProfileService();
+  private paymentService: PaymentService = new PaymentService();
 
   async updateUser(req, res) {
     if (!req.body.user || !req.body.user.uid)
@@ -94,5 +96,58 @@ export class UserController {
     return res
       .status(200)
       .json({ status: "OK", data: { userChannelData, competitorChannelData } });
+  }
+
+  async createCheckoutLink(req, res) {
+    try {
+      const checkoutLink = await this.paymentService.createCheckoutLink({
+        lineItem: [{ price: "price_1LE7keJ8XE3hrjLv1lcjfXKx", quantity: 1 }],
+        uid: req.user.uid,
+      });
+
+      return res
+        .status(200)
+        .json({ status: "OK", data: { checkoutLink: checkoutLink.url } });
+    } catch (error) {
+      console.log(error);
+      return res
+        .status(400)
+        .json({ status: "FAIL", msg: "Insufficient parameter" });
+    }
+  }
+
+  async webHook(req, res) {
+    const event = req.body;
+    console.log(event);
+    switch (event.type) {
+      case "payment_intent.succeeded":
+        const { metadata, payment_method, amount } = event.data.object;
+        const userData = await this.userService.findUser({ uid: metadata.uid });
+        if (!userData) break;
+        await this.updateUser(
+          { uid: metadata.uid },
+          {
+            payment: [
+              {
+                title: "MONTHLY",
+                date: new Date(),
+                method: payment_method ? payment_method : "CARD",
+                price: amount,
+              },
+              ...userData.payment,
+            ],
+          }
+        );
+        break;
+      case "payment_method.attached":
+        const paymentMethod = event.data.object;
+        console.log("PaymentMethod was attached to a Customer!");
+        break;
+      // ... handle other event types
+      default:
+        console.log(`Unhandled event type ${event.type}`);
+    }
+
+    return res.json({ received: true });
   }
 }

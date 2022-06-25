@@ -41,6 +41,18 @@ export class Router {
       }
     );
 
+    this.app.post(
+      "/api/user/checkoutLink",
+      this.middleware.authorization.bind(this.middleware),
+      (req, res) => {
+        return this.userController.createCheckoutLink(req, res);
+      }
+    );
+
+    this.app.post("/webhook", (req, res) => {
+      return this.userController.webHook(req, res);
+    });
+
     this.app.post("/api/service/getChannel", (req, res) => {
       return this.serviceController.getChannelInformation(req, res);
     });
