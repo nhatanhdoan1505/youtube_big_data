@@ -118,10 +118,22 @@ export class UserController {
 
   async webHook(req, res) {
     const event = req.body;
-    console.log(event);
     switch (event.type) {
       case "payment_intent.succeeded":
-        const { metadata, payment_method, amount } = event.data.object;
+        const {
+          metadata,
+          payment_method,
+          amount,
+          payment_method_options,
+          payment_method_types,
+        } = event.data.object;
+        console.log({
+          metadata,
+          payment_method,
+          amount,
+          payment_method_options,
+          payment_method_types,
+        });
         const userData = await this.userService.findUser({ uid: metadata.uid });
         if (!userData) break;
         await this.updateUser(
