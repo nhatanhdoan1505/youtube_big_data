@@ -7,7 +7,7 @@ interface ILineItem {
 }
 
 export class PaymentService {
-  private endpointSecret: string = "we_1LEQFdJ8XE3hrjLvYp5nOPCj";
+  private endpointSecret: string = "whsec_04bWFidUSQI4RGLJMvfsCecSVaqRY66l";
 
   private stripe = new Stripe(process.env.STRIPE_SECRET, {
     apiVersion: "2020-08-27",

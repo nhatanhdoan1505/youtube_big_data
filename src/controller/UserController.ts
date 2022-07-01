@@ -116,7 +116,10 @@ export class UserController {
     let event = req.body;
     const signature = req.headers["stripe-signature"];
 
-    event = this.paymentService.constructEventWebhook({ event, signature });
+    event = await this.paymentService.constructEventWebhook({
+      event,
+      signature,
+    });
 
     if (!event) return res.status(400);
 
