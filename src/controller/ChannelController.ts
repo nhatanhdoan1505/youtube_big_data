@@ -7,14 +7,9 @@ import { HotVideoService } from "../models/video-hot/service";
 import { IHotVideo } from "../models/video-hot/type";
 import {
   queryUploadStatistic,
-  queryVideoDurationStatistic,
   queryVideoViewDistribution,
 } from "../utils/common";
-import { YoutubeHandler } from "./../handler/YoutubeHandler";
-import {
-  queryChannelSubscriberStatistic,
-  queryVideoViewStatistic,
-} from "./../utils/common";
+import { queryChannelSubscriberStatistic } from "./../utils/common";
 
 export class ChannelController {
   private channelService: ChannelService = new ChannelService();

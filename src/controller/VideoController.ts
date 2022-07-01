@@ -1,18 +1,13 @@
+import * as _ from "lodash";
+import { HotVideoService } from "./../models/video-hot/service";
+import { IHotVideo } from "./../models/video-hot/type";
 import {
   queryVideoDurationStatistic,
   queryVideoViewStatistic,
 } from "./../utils/common";
-import { IHotVideo } from "./../models/video-hot/type";
-import { YoutubeHandler } from "./../handler/YoutubeHandler";
-import { HotChannelService } from "./../models/channel-hot/service";
-import { HotVideoService } from "./../models/video-hot/service";
-import { ChannelService } from "./../models/channel/service";
-import * as _ from "lodash";
 
 export class VideoController {
-  private channelService: ChannelService = new ChannelService();
   private hotVideoService: HotVideoService = new HotVideoService();
-  private hotChannelService: HotChannelService = new HotChannelService();
 
   async getSortVideos(req, res) {
     if (

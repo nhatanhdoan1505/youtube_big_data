@@ -1,16 +1,11 @@
-import { UserService } from "../models/user/service";
 import * as _ from "lodash";
-import { HotChannelService } from "../models/channel-hot/service";
-import { MainService } from "../utils/MainService";
-import { IChannelBaseInformation } from "models/channel/type";
-import { ProfileService } from "../utils/ProfileService";
+import { UserService } from "../models/user/service";
 import { IPayment, IUser } from "../models/user/type";
 import { PaymentService } from "../utils/PaymentService";
+import { ProfileService } from "../utils/ProfileService";
 
 export class UserController {
   private userService: UserService = new UserService();
-  private hotChannelService: HotChannelService = new HotChannelService();
-  private mainService: MainService = new MainService();
   private profileService: ProfileService = new ProfileService();
   private paymentService: PaymentService = new PaymentService();
 
@@ -99,6 +94,7 @@ export class UserController {
   }
 
   async createCheckoutLink(req, res) {
+    console.log(req.user.uid);
     try {
       const checkoutLink = await this.paymentService.createCheckoutLink({
         lineItem: [{ price: "price_1LE7keJ8XE3hrjLv1lcjfXKx", quantity: 1 }],
@@ -117,7 +113,14 @@ export class UserController {
   }
 
   async webHook(req, res) {
-    const event = req.body;
+    let event = req.body;
+    const signature = req.headers["stripe-signature"];
+
+    event = this.paymentService.constructEventWebhook({ event, signature });
+
+    if (!event) return res.status(400);
+
+    console.log(event);
     switch (event.type) {
       case "payment_intent.succeeded":
         const {
@@ -127,13 +130,8 @@ export class UserController {
           payment_method_options,
           payment_method_types,
         } = event.data.object;
-        console.log({
-          metadata,
-          payment_method,
-          amount,
-          payment_method_options,
-          payment_method_types,
-        });
+
+        console.log(event.data.object);
         const userData = await this.userService.findUser({ uid: metadata.uid });
         if (!userData) break;
         await this.updateUser(

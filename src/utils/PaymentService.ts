@@ -7,6 +7,8 @@ interface ILineItem {
 }
 
 export class PaymentService {
+  private endpointSecret: string = "we_1LEQFdJ8XE3hrjLvYp5nOPCj";
+
   private stripe = new Stripe(process.env.STRIPE_SECRET, {
     apiVersion: "2020-08-27",
   });
@@ -18,14 +20,17 @@ export class PaymentService {
     lineItem: ILineItem[];
     uid: string;
   }) {
+    console.log({ uid });
     const paymentLink = await this.stripe.paymentLinks.create({
       line_items: lineItem,
       after_completion: {
         type: "redirect",
-        redirect: { url: "http://localhost:3000" },
+        redirect: { url: "http://localhost:3000/thankyou" },
       },
       metadata: { uid },
     });
+
+    console.log({ paymentLink });
 
     return paymentLink;
   }
@@ -33,5 +38,21 @@ export class PaymentService {
   async createCustomer({ email }: IUser) {
     const customer = await this.stripe.customers.create({ email });
     return customer;
+  }
+
+  async constructEventWebhook({ event, signature }) {
+    if (this.endpointSecret) {
+      try {
+        event = this.stripe.webhooks.constructEvent(
+          event,
+          signature,
+          this.endpointSecret
+        );
+        return event;
+      } catch (err) {
+        console.log(`⚠️  Webhook signature verification failed.`, err.message);
+        return null;
+      }
+    }
   }
 }
