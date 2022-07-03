@@ -1,9 +1,8 @@
+import { ChannelController } from "./controller/ChannelController";
 import { ServiceController } from "./controller/ServiceController";
 import { UserController } from "./controller/UserController";
-import { ChannelController } from "./controller/ChannelController";
 import { VideoController } from "./controller/VideoController";
 import { Middleware } from "./middleware/Authorization";
-import express from "express";
 
 export class Router {
   private app;
@@ -50,13 +49,9 @@ export class Router {
       }
     );
 
-    this.app.post(
-      "/webhook",
-      express.raw({ type: "application/json" }),
-      (req, res) => {
-        return this.userController.webHook(req, res);
-      }
-    );
+    this.app.post("/webhook", (req, res) => {
+      return this.userController.webHook(req, res);
+    });
 
     this.app.post("/api/service/getChannel", (req, res) => {
       return this.serviceController.getChannelInformation(req, res);

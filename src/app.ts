@@ -19,6 +19,7 @@ const main = async () => {
   await connectMongo();
 
   app.use(express.static(path.join(__dirname)));
+  app.use("/webhook", express.raw({ type: "*/*" }));
   app.use(express.json());
   app.use(cors({ credentials: true, origin: true }));
   app.use(bodyParser.urlencoded({ extended: false }));

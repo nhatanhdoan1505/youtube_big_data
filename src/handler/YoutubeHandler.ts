@@ -387,7 +387,7 @@ export class YoutubeHandler {
           ])
         )[0].count;
 
-    let skip = 0;
+    let skip = 755;
     let data;
 
     this.total = totalData;

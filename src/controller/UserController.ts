@@ -3,6 +3,7 @@ import { UserService } from "../models/user/service";
 import { IPayment, IUser } from "../models/user/type";
 import { PaymentService } from "../utils/PaymentService";
 import { ProfileService } from "../utils/ProfileService";
+import express from "express";
 
 export class UserController {
   private userService: UserService = new UserService();
@@ -115,7 +116,6 @@ export class UserController {
   async webHook(req, res) {
     let event = req.body;
     const signature = req.headers["stripe-signature"];
-
     event = await this.paymentService.constructEventWebhook({
       event,
       signature,
