@@ -137,7 +137,7 @@ export class UserController {
           email: customerData.email,
         });
         if (!userData) break;
-        await this.updateUser(
+        await this.userService.updateUser(
           { email: customerData.email },
           {
             payment: [
