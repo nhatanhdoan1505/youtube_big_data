@@ -57,6 +57,25 @@ export class VideoController {
     const tagsList = await this.hotVideoService.queryHotVideo(
       [
         {
+          $project: {
+            tags: 1,
+            numberOfTags: {
+              $cond: {
+                if: { $isArray: "$tags" },
+                then: { $size: "$tags" },
+                else: "NA",
+              },
+            },
+            views: 1,
+          },
+        },
+        {
+          $match: {
+            numberOfTags: { $gt: 0 },
+            views: { $gt: 0 },
+          },
+        },
+        {
           $unwind: {
             path: "$tags",
           },
@@ -144,6 +163,25 @@ export class VideoController {
   async getVideoKeywordsSort(req, res) {
     const keywordList = await this.hotVideoService.queryHotVideo(
       [
+        {
+          $project: {
+            keywords: 1,
+            numberOfKeywords: {
+              $cond: {
+                if: { $isArray: "$keywords" },
+                then: { $size: "$keywords" },
+                else: "NA",
+              },
+            },
+            views: 1,
+          },
+        },
+        {
+          $match: {
+            numberOfKeywords: { $gt: 0 },
+            views: { $gt: 0 },
+          },
+        },
         {
           $unwind: {
             path: "$keywords",

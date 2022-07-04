@@ -101,7 +101,7 @@ export class UserController {
         lineItem: [{ price: "price_1LE7keJ8XE3hrjLv1lcjfXKx", quantity: 1 }],
         uid: req.user.uid,
       });
-
+      console.log({ checkoutLink });
       return res
         .status(200)
         .json({ status: "OK", data: { checkoutLink: checkoutLink.url } });
