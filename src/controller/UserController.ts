@@ -146,8 +146,9 @@ export class UserController {
         const customerData = await this.paymentService.getCustomerData({
           id: customer,
         });
-        if (!customerData) break;
         console.log(customerData);
+        if (!customerData) break;
+
         // const userData = await this.userService.findUser({ uid: metadata.uid });
         // if (!userData) break;
         // await this.updateUser(
