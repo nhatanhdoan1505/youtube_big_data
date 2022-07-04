@@ -124,23 +124,24 @@ export class UserController {
     if (!event) return res.status(400);
 
     console.log("a", event);
+    const {
+      payment_method,
+      payment_method_options,
+      payment_method_types,
+      charges,
+      amount_details,
+    } = event.data.object;
+
+    console.log("FIX", {
+      payment_method,
+      payment_method_options,
+      payment_method_types,
+      charges,
+      amount_details,
+    });
+    console.log("HIHI", charges.data);
     switch (event.type) {
       case "payment_intent.succeeded":
-        const {
-          payment_method,
-          payment_method_options,
-          payment_method_types,
-          charges,
-          amount_details,
-        } = event.data.object;
-
-        console.log("FIX", {
-          payment_method,
-          payment_method_options,
-          payment_method_types,
-          charges,
-          amount_details,
-        });
         // const userData = await this.userService.findUser({ uid: metadata.uid });
         // if (!userData) break;
         // await this.updateUser(
