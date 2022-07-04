@@ -123,7 +123,7 @@ export class UserController {
 
     if (!event) return res.status(400);
 
-    console.log(event);
+    console.log("a", event);
     switch (event.type) {
       case "payment_intent.succeeded":
         const {
@@ -133,8 +133,7 @@ export class UserController {
           payment_method_options,
           payment_method_types,
         } = event.data.object;
-
-        console.log(event.data.object);
+        
         const userData = await this.userService.findUser({ uid: metadata.uid });
         if (!userData) break;
         await this.updateUser(
@@ -158,7 +157,7 @@ export class UserController {
         break;
       // ... handle other event types
       default:
-        console.log(`Unhandled event type ${event.type}`);
+        console.log(`Unhandled event type ${event}`);
     }
 
     return res.json({ received: true });
