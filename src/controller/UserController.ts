@@ -124,47 +124,33 @@ export class UserController {
     if (!event) return res.status(400);
 
     console.log("a", event);
-    const {
-      payment_method,
-      payment_method_options,
-      payment_method_types,
-      charges,
-      amount_details,
-      customer,
-    } = event.data.object;
+    const { customer, payment_method, amount } = event.data.object;
 
     switch (event.type) {
       case "payment_intent.succeeded":
-        console.log("FIX", {
-          payment_method,
-          payment_method_options,
-          payment_method_types,
-          charges,
-          amount_details,
-        });
-        console.log("HIHI", charges.data);
-        const customerData = await this.paymentService.getCustomerData({
+        const customerData = (await this.paymentService.getCustomerData({
           id: customer,
-        });
-        console.log(customerData);
+        })) as any;
         if (!customerData) break;
 
-        // const userData = await this.userService.findUser({ uid: metadata.uid });
-        // if (!userData) break;
-        // await this.updateUser(
-        //   { uid: metadata.uid },
-        //   {
-        //     payment: [
-        //       {
-        //         title: "MONTHLY",
-        //         date: new Date(),
-        //         method: payment_method ? payment_method : "CARD",
-        //         price: amount,
-        //       },
-        //       ...userData.payment,
-        //     ],
-        //   }
-        // );
+        const userData = await this.userService.findUser({
+          email: customerData.email,
+        });
+        if (!userData) break;
+        await this.updateUser(
+          { email: customerData.email },
+          {
+            payment: [
+              {
+                title: "MONTHLY",
+                date: new Date(),
+                method: payment_method ? payment_method : "CARD",
+                price: amount,
+              },
+              ...userData.payment,
+            ],
+          }
+        );
         break;
       case "payment_method.attached":
         const paymentMethod = event.data.object;
