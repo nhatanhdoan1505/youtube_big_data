@@ -127,29 +127,36 @@ export class UserController {
     switch (event.type) {
       case "payment_intent.succeeded":
         const {
-          metadata,
           payment_method,
-          amount,
           payment_method_options,
           payment_method_types,
+          charges,
+          amount_details,
         } = event.data.object;
-        
-        const userData = await this.userService.findUser({ uid: metadata.uid });
-        if (!userData) break;
-        await this.updateUser(
-          { uid: metadata.uid },
-          {
-            payment: [
-              {
-                title: "MONTHLY",
-                date: new Date(),
-                method: payment_method ? payment_method : "CARD",
-                price: amount,
-              },
-              ...userData.payment,
-            ],
-          }
-        );
+
+        console.log("FIX", {
+          payment_method,
+          payment_method_options,
+          payment_method_types,
+          charges,
+          amount_details,
+        });
+        // const userData = await this.userService.findUser({ uid: metadata.uid });
+        // if (!userData) break;
+        // await this.updateUser(
+        //   { uid: metadata.uid },
+        //   {
+        //     payment: [
+        //       {
+        //         title: "MONTHLY",
+        //         date: new Date(),
+        //         method: payment_method ? payment_method : "CARD",
+        //         price: amount,
+        //       },
+        //       ...userData.payment,
+        //     ],
+        //   }
+        // );
         break;
       case "payment_method.attached":
         const paymentMethod = event.data.object;
