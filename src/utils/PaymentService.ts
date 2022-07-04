@@ -28,6 +28,7 @@ export class PaymentService {
         redirect: { url: "http://localhost:3000/thankyou" },
       },
       metadata: { uid },
+      customer_creation: "always",
     });
 
     console.log({ paymentLink });
@@ -38,6 +39,16 @@ export class PaymentService {
   async createCustomer({ email }: IUser) {
     const customer = await this.stripe.customers.create({ email });
     return customer;
+  }
+
+  async getCustomerData({ id }: { id: string }) {
+    try {
+      const customer = await this.stripe.customers.retrieve(id);
+      return customer;
+    } catch (error) {
+      console.log(error);
+      return false;
+    }
   }
 
   async constructEventWebhook({ event, signature }) {
