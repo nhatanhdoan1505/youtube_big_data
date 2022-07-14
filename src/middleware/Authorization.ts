@@ -7,15 +7,17 @@ export class Middleware {
 
   async authorization(req, res, next) {
     try {
-      if (!req.headers.authorization) next();
+      if (!req.headers.authorization || req.headers.authorization === "")
+        return next();
+
       const { uid } = await auth(app).verifyIdToken(req.headers.authorization);
       const user = await this.userService.findUser({ uid });
-      if (!user) next();
+      if (!user) return next();
       req.user = user;
-      next();
+      return next();
     } catch (error) {
       console.log(error);
-      next();
+      return next();
     }
   }
 }

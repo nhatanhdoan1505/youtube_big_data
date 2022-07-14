@@ -1,3 +1,4 @@
+import { IChannel } from "models/channel/type";
 import fs from "fs";
 import * as _ from "lodash";
 import { IHotChannel } from "models/channel-hot/type";
@@ -650,5 +651,64 @@ export class ChannelController {
         channelList,
       },
     });
+  }
+
+  async formatDB(req, res) {
+    let channelData = (await this.channelService.queryChannel([
+      { $skip: 40 },
+      { $limit: 5 },
+    ])) as IChannel[];
+
+    channelData = channelData.map((c) => {
+      let { subscribe, views, numberVideos, date, videoList } = c;
+      subscribe = subscribe
+        .split("|")
+        .slice(0, subscribe.split("|").length - 1)
+        .join("|");
+      views = views
+        .split("|")
+        .slice(0, views.split("|").length - 1)
+        .join("|");
+      numberVideos = numberVideos
+        .split("|")
+        .slice(0, numberVideos.split("|").length - 1)
+        .join("|");
+      date = date
+        .split("|")
+        .slice(0, date.split("|").length - 1)
+        .join("|");
+      videoList = videoList.map((v) => {
+        let { views, likes, dislikes, commentCount, date } = v;
+        views = views
+          .split("|")
+          .slice(0, views.split("|").length - 1)
+          .join("|");
+        likes = likes
+          .split("|")
+          .slice(0, likes.split("|").length - 1)
+          .join("|");
+        dislikes = dislikes
+          .split("|")
+          .slice(0, dislikes.split("|").length - 1)
+          .join("|");
+        commentCount = commentCount
+          .split("|")
+          .slice(0, commentCount.split("|").length - 1)
+          .join("|");
+        date = date
+          .split("|")
+          .slice(0, date.split("|").length - 1)
+          .join("|");
+        return { ...v, views, likes, dislikes, commentCount, date };
+      });
+
+      return { ...c, subscribe, views, numberVideos, date, videoList };
+    });
+
+    let promise = channelData.map((c) =>
+      this.channelService.updateChannel({ id: c.id }, c)
+    );
+
+    await Promise.all(promise);
   }
 }

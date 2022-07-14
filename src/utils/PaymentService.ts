@@ -20,7 +20,6 @@ export class PaymentService {
     lineItem: ILineItem[];
     uid: string;
   }) {
-    console.log({ uid });
     const paymentLink = await this.stripe.paymentLinks.create({
       line_items: lineItem,
       after_completion: {
@@ -30,8 +29,6 @@ export class PaymentService {
       metadata: { uid },
       customer_creation: "always",
     });
-
-    console.log({ paymentLink });
 
     return paymentLink;
   }

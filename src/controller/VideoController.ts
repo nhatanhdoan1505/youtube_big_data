@@ -17,7 +17,7 @@ export class VideoController {
       return res
         .status(400)
         .json({ status: "FAIL", msg: "Insufficient parameter" });
-
+        
     let pageNumber = +req.params.pageNumber;
 
     let skipDocument = (pageNumber - 1) * 50;

@@ -12,7 +12,6 @@ export class ServiceController {
       await this.channelService.filterChannel({})
     ).map((c) => c.id);
     const idEndpoint = ids.map((i) => `&id=${i}`).join("");
-    console.log({ idEndpoint });
     let data = await this.mainService.test(idEndpoint);
     return res.status(200).json({ data });
   }
@@ -69,7 +68,6 @@ export class ServiceController {
       .map((url) => url[url.length - 1])
       .filter((url) => url !== "");
 
-    console.log({ listUserName });
     let idFromUser = await this.mainService.getChannelId(listUserName);
     listId = [...listId, ...idFromUser];
     listId = [...new Set(listId)];

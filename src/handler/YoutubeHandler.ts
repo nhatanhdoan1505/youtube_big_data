@@ -282,7 +282,6 @@ export class YoutubeHandler {
         { $project: { id: 1 } },
       ])
     ).map((c) => c.id);
-    console.log({ existChannel: existChannel.length });
 
     let listUrl = url.split(",").map((url) => {
       if (url[url.length - 1] === "/") {
@@ -308,8 +307,6 @@ export class YoutubeHandler {
     let idFromUser = await this.mainService.getChannelId(listUserName);
     listId = [...listId, ...idFromUser];
     listId = _.uniq(listId);
-
-    console.log(listId.length);
 
     if (listId.length === 0) {
       this.emitter.serverStatus({
@@ -387,7 +384,7 @@ export class YoutubeHandler {
           ])
         )[0].count;
 
-    let skip = 130;
+    let skip = 160;
     let data;
 
     this.total = totalData;

@@ -113,6 +113,10 @@ export class Router {
       return this.videoController.getSortVideos(req, res);
     });
 
+    this.app.post("/api/test", (req, res) => {
+      return this.channelController.formatDB(req, res);
+    });
+
     this.app.get(
       "/api/video/sort/total",
       this.middleware.authorization.bind(this.middleware),

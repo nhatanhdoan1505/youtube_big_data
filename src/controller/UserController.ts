@@ -57,10 +57,10 @@ export class UserController {
       );
       isPremium = expired.getTime() >= Date.now() ? true : false;
     }
-
+    
     return res
       .status(200)
-      .json({ status: "OK", data: { userData, isPremium } });
+      .json({ status: "OK", data: { userData: { ...userData, isPremium } } });
   }
 
   async updateUserProfile(req, res) {
@@ -95,13 +95,11 @@ export class UserController {
   }
 
   async createCheckoutLink(req, res) {
-    console.log(req.user.uid);
     try {
       const checkoutLink = await this.paymentService.createCheckoutLink({
         lineItem: [{ price: "price_1LE7keJ8XE3hrjLv1lcjfXKx", quantity: 1 }],
         uid: req.user.uid,
       });
-      console.log({ checkoutLink });
       return res
         .status(200)
         .json({ status: "OK", data: { checkoutLink: checkoutLink.url } });
@@ -123,7 +121,6 @@ export class UserController {
 
     if (!event) return res.status(400);
 
-    console.log("a", event);
     const { customer, payment_method, amount } = event.data.object;
 
     switch (event.type) {
