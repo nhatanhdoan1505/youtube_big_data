@@ -17,7 +17,7 @@ export class VideoController {
       return res
         .status(400)
         .json({ status: "FAIL", msg: "Insufficient parameter" });
-        
+
     let pageNumber = +req.params.pageNumber;
 
     let skipDocument = (pageNumber - 1) * 50;
@@ -287,7 +287,9 @@ export class VideoController {
           ? 0
           : videoDurationStatistics[i][0].count;
     }
-    averageViewsRecommendedDuration = averageVideoViewList.sort().reverse()[0];
+    averageViewsRecommendedDuration = [...averageVideoViewList]
+      .sort((a, b) => (a - b))
+      .reverse()[0];
     for (let i in _videoDurationStatistics) {
       if (
         +_videoDurationStatistics[i][0].averageViews ===

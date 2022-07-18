@@ -8,34 +8,34 @@ export class HotChannelService {
       ...params,
       _id: new Types.ObjectId(),
     });
-    return await _session.save();
+    return _session.save();
   }
 
   async filterHotChannel(query): Promise<IHotChannel[]> {
-    return await HotChannel.find(query).lean();
+    return HotChannel.find(query).lean();
   }
 
   async findHotChannel(query): Promise<IHotChannel> {
-    return await HotChannel.findOne(query).lean();
+    return HotChannel.findOne(query).lean();
   }
 
   async updateHotChannel(query, params): Promise<IHotChannel> {
     let { _id, ...updateHotChannel } = params;
-    return await HotChannel.findOneAndUpdate(query, updateHotChannel, {
+    return HotChannel.findOneAndUpdate(query, updateHotChannel, {
       new: true,
       upsert: true,
     }).lean();
   }
 
   async queryHotChannel(query: any, condition?: any): Promise<any> {
-    return await HotChannel.aggregate(query, condition);
+    return HotChannel.aggregate(query, condition);
   }
 
   async getTotalHotChannel(): Promise<number> {
-    return await HotChannel.count({}).lean();
+    return HotChannel.count({}).lean();
   }
 
   async deleteHotChannel(query) {
-    return await HotChannel.deleteMany(query);
+    return HotChannel.deleteMany(query);
   }
 }

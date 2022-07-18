@@ -10,8 +10,8 @@ services:
       - MONGO_INITDB_ROOT_USERNAME=admin
       - MONGO_INITDB_ROOT_PASSWORD=123456
     command: [--auth]
-  game:
-    container_name: youtubedata
+  app:
+    container_name: youtube-toolbox
     build: .
     ports:
       - "8080:8080"

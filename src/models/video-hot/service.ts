@@ -8,34 +8,34 @@ export class HotVideoService {
       ...params,
       _id: new Types.ObjectId(),
     });
-    return await _session.save();
+    return _session.save();
   }
 
   async filterHotVideo(query): Promise<IHotVideo[]> {
-    return await HotVideo.find(query).lean();
+    return HotVideo.find(query).lean();
   }
 
   async findHotVideo(query): Promise<IHotVideo> {
-    return await HotVideo.findOne(query).lean();
+    return HotVideo.findOne(query).lean();
   }
 
   async updateHotVideo(query, params): Promise<IHotVideo> {
     let { _id, ...updateHotVideo } = params;
-    return await HotVideo.findOneAndUpdate(query, updateHotVideo, {
+    return HotVideo.findOneAndUpdate(query, updateHotVideo, {
       new: true,
       upsert: true,
     }).lean();
   }
 
   async queryHotVideo(query: any, options?: any): Promise<any> {
-    return await HotVideo.aggregate(query, options);
+    return HotVideo.aggregate(query, options);
   }
 
   async getTotalHotVideo(): Promise<number> {
-    return await HotVideo.count({}).lean();
+    return HotVideo.count({}).lean();
   }
 
   async deleteHotVideo(query) {
-    return await HotVideo.deleteMany(query);
+    return HotVideo.deleteMany(query);
   }
 }

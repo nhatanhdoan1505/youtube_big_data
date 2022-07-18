@@ -150,7 +150,6 @@ export class UserController {
         );
         break;
       case "payment_method.attached":
-        const paymentMethod = event.data.object;
         console.log("PaymentMethod was attached to a Customer!");
         break;
       // ... handle other event types

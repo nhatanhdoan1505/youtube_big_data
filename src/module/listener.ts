@@ -11,9 +11,7 @@ export class Listener {
   }
 
   listen(socket: Socket) {
-    socket.on("disconnect", async () => {
-      // console.log(`$${socket.id} disconnected`);
-    });
+    socket.on("disconnect", async () => {});
 
     socket.on(
       EVENT.GET_NEW_CHANNEL,
@@ -22,7 +20,7 @@ export class Listener {
 
         await this.youtubeHandler.getNewChannel({ url, label });
 
-        return;
+        return 0;
       }
     );
 
@@ -33,16 +31,16 @@ export class Listener {
 
         await this.youtubeHandler.updateChannelInformation({ label });
 
-        return;
+        return 0;
       }
     );
 
     socket.on(EVENT.OPTIMIZE, async ({ label }: { label: string | null }) => {
       await this.youtubeHandler.updateHotChannel({ label });
-      
+
       await this.youtubeHandler.updateHotVideo({ label });
 
-      return;
+      return 0;
     });
 
     socket.on(EVENT.SERVER_READY, () => {

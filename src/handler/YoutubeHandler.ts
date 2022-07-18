@@ -45,14 +45,23 @@ export class YoutubeHandler {
     this.ready = false;
     this.serviceRunning = "OPTIMIZE";
 
-    let channelList = label
-      ? await this.channelService.filterChannel({ label })
-      : await this.channelService.filterChannel({});
-    let j = 0;
-    let channelData: IChannel[] = [];
+    let totalData = label
+      ? (
+          await this.channelService.queryChannel([
+            { $match: { label } },
+            { $project: { _id: 1 } },
+            { $group: { _id: null, count: { $sum: 1 } } },
+          ])
+        )[0].count
+      : (
+          await this.channelService.queryChannel([
+            { $project: { _id: 1 } },
+            { $group: { _id: null, count: { $sum: 1 } } },
+          ])
+        )[0].count;
 
+    this.total = totalData;
     this.numberWorked = 0;
-    this.total = _.sumBy(channelList, (c: IChannel) => c.videoList.length);
     this.emitter.serverStatus({
       ready: this.ready,
       serviceRunning: this.serviceRunning,
@@ -60,8 +69,24 @@ export class YoutubeHandler {
       numberWorked: this.numberWorked,
     });
 
-    while (j < channelList.length) {
-      channelData = channelList.slice(j, j + 5);
+    let skip = 0;
+    let numberLoop =
+      totalData % 5 === 0
+        ? Math.floor(totalData / 5)
+        : Math.floor(totalData / 5) + 1;
+    let j = 0;
+    let channelData: IChannel[] = [];
+    while (j < numberLoop) {
+      channelData = label
+        ? await this.channelService.queryChannel([
+            { $match: { label } },
+            { $skip: skip },
+            { $limit: 5 },
+          ])
+        : await this.channelService.queryChannel([
+            { $skip: skip },
+            { $limit: 5 },
+          ]);
       let videoList = channelData
         .map((c) => {
           let { videoList, ...channelInformation } = c;
@@ -158,7 +183,16 @@ export class YoutubeHandler {
         });
         i += 10;
       }
-      j += 5;
+      skip += 5;
+      j += 1;
+      this.numberWorked += 5;
+
+      this.emitter.serverStatus({
+        ready: this.ready,
+        serviceRunning: this.serviceRunning,
+        total: this.total,
+        numberWorked: this.numberWorked,
+      });
     }
 
     this.serverReady();
@@ -180,40 +214,95 @@ export class YoutubeHandler {
     this.ready = false;
     this.serviceRunning = "OPTIMIZE";
 
-    let channelList = label
-      ? await this.channelService.filterChannel({ label })
-      : await this.channelService.filterChannel({});
+    let totalData = label
+      ? (
+          await this.channelService.queryChannel([
+            { $match: { label } },
+            { $project: { _id: 1 } },
+            { $group: { _id: null, count: { $sum: 1 } } },
+          ])
+        )[0].count
+      : (
+          await this.channelService.queryChannel([
+            { $project: { _id: 1 } },
+            { $group: { _id: null, count: { $sum: 1 } } },
+          ])
+        )[0].count;
+    console.log(totalData);
+    this.total = totalData;
+    this.numberWorked = 0;
+    this.emitter.serverStatus({
+      ready: this.ready,
+      serviceRunning: this.serviceRunning,
+      total: this.total,
+      numberWorked: this.numberWorked,
+    });
 
-    let channelListSort = channelList.map((c) => {
-      let {
-        videoList,
-        subscribe,
-        views,
-        numberVideos,
-        publishedAt,
-        ...channelInfo
-      } = c;
-      let gapViews =
-        views.split("|").length > 1
-          ? +_.nth(views.split("|"), -1) - +_.nth(views.split("|"), -2)
-          : 0;
-      let viewsHistory = views;
-      views = _.nth(views.split("|"), -1);
-      let subscribesHistory = subscribe;
-      let gapSubscribes =
-        subscribe.split("|").length > 1
-          ? +_.nth(subscribe.split("|"), -1) - +_.nth(subscribe.split("|"), -2)
-          : 0;
-      subscribe = _.nth(subscribe.split("|"), -1);
-      let gapNumberVideos =
-        numberVideos.split("|").length > 1
-          ? +_.nth(numberVideos.split("|"), -1) -
-            +_.nth(numberVideos.split("|"), -2)
-          : 0;
-      let numberVideosHistory = numberVideos;
-      numberVideos = _.nth(numberVideos.split("|"), -1);
+    let skip = 0;
+    let numberLoop =
+      totalData % 50 === 0
+        ? Math.floor(totalData / 50)
+        : Math.floor(totalData / 50) + 1;
+    let j = 0;
 
-      if (!publishedAt)
+    let channelList;
+    let channelListSort;
+    while (j < numberLoop) {
+      console.log("j");
+      channelList = label
+        ? await this.channelService.queryChannel([
+            { $match: { label } },
+            { $skip: skip },
+            { $limit: 50 },
+          ])
+        : await this.channelService.queryChannel([
+            { $skip: skip },
+            { $limit: 50 },
+          ]);
+      channelListSort = channelList.map((c) => {
+        let {
+          videoList,
+          subscribe,
+          views,
+          numberVideos,
+          publishedAt,
+          ...channelInfo
+        } = c;
+        let gapViews =
+          views.split("|").length > 1
+            ? +_.nth(views.split("|"), -1) - +_.nth(views.split("|"), -2)
+            : 0;
+        let viewsHistory = views;
+        views = _.nth(views.split("|"), -1);
+        let subscribesHistory = subscribe;
+        let gapSubscribes =
+          subscribe.split("|").length > 1
+            ? +_.nth(subscribe.split("|"), -1) -
+              +_.nth(subscribe.split("|"), -2)
+            : 0;
+        subscribe = _.nth(subscribe.split("|"), -1);
+        let gapNumberVideos =
+          numberVideos.split("|").length > 1
+            ? +_.nth(numberVideos.split("|"), -1) -
+              +_.nth(numberVideos.split("|"), -2)
+            : 0;
+        let numberVideosHistory = numberVideos;
+        numberVideos = _.nth(numberVideos.split("|"), -1);
+
+        if (!publishedAt)
+          return {
+            ...channelInfo,
+            views: +views ? +views : -1,
+            numberVideos: +numberVideos ? +numberVideos : -1,
+            subscribe: +subscribe ? +subscribe : -1,
+            gapNumberVideos: gapNumberVideos ? gapNumberVideos : 0,
+            gapSubscribes: gapSubscribes ? gapSubscribes : 0,
+            gapViews: gapViews ? gapViews : 0,
+            viewsHistory,
+            subscribesHistory,
+            numberVideosHistory,
+          };
+
         return {
           ...channelInfo,
           views: +views ? +views : -1,
@@ -225,36 +314,27 @@ export class YoutubeHandler {
           viewsHistory,
           subscribesHistory,
           numberVideosHistory,
+          publishedAt: new Date(publishedAt) ? new Date(publishedAt) : null,
+          averageUpload:
+            +numberVideos > 0
+              ? (Date.now() - publishedAt.getTime()) / 604800000 / +numberVideos
+              : null,
         };
-
-      return {
-        ...channelInfo,
-        views: +views ? +views : -1,
-        numberVideos: +numberVideos ? +numberVideos : -1,
-        subscribe: +subscribe ? +subscribe : -1,
-        gapNumberVideos: gapNumberVideos ? gapNumberVideos : 0,
-        gapSubscribes: gapSubscribes ? gapSubscribes : 0,
-        gapViews: gapViews ? gapViews : 0,
-        viewsHistory,
-        subscribesHistory,
-        numberVideosHistory,
-        publishedAt: new Date(publishedAt) ? new Date(publishedAt) : null,
-        averageUpload:
-          +numberVideos > 0
-            ? (Date.now() - publishedAt.getTime()) / 604800000 / +numberVideos
-            : null,
-      };
-    });
-
-    let i = 0;
-
-    while (i < channelListSort.length) {
-      let channelData = channelListSort.slice(i, i + 50);
-      const saveDataPromise = channelData.map((v) =>
+      });
+      const saveDataPromise = channelListSort.map((v) =>
         this.hotChannelService.updateHotChannel({ id: v.id }, v)
       );
       await Promise.all(saveDataPromise);
-      i += 50;
+      skip += 50;
+      j += 1;
+
+      this.numberWorked += 50;
+      this.emitter.serverStatus({
+        ready: this.ready,
+        serviceRunning: this.serviceRunning,
+        total: this.total,
+        numberWorked: this.numberWorked,
+      });
     }
 
     this.serverReady();
@@ -379,12 +459,11 @@ export class YoutubeHandler {
         )[0].count
       : (
           await this.channelService.queryChannel([
-            { $match: { label } },
             { $group: { _id: null, count: { $sum: 1 } } },
           ])
         )[0].count;
 
-    let skip = 160;
+    let skip = 0;
     let data;
 
     this.total = totalData;

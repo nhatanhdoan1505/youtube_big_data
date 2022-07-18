@@ -126,7 +126,6 @@ export class ChannelController {
   }
 
   async updateHotChannel(req, res) {
-    // await this.youtubeHandler.updateHotChannel();
 
     return res.status(200).json({ status: "OK" });
   }
@@ -168,7 +167,6 @@ export class ChannelController {
   }
 
   async updateHotVideo(req, res) {
-    // await this.youtubeHandler.updateHotVideo();
     return res.status(200).json({ status: "OK" });
   }
 

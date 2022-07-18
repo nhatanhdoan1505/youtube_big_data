@@ -8,7 +8,7 @@ export class ServiceController {
   private channelService: ChannelService = new ChannelService();
 
   async test(req, res) {
-    const ids = await (
+    const ids = (
       await this.channelService.filterChannel({})
     ).map((c) => c.id);
     const idEndpoint = ids.map((i) => `&id=${i}`).join("");

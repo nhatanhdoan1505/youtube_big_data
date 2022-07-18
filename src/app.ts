@@ -26,9 +26,6 @@ const main = async () => {
 
   router.route();
 
-  // const cronJob = new CronJob(mainService);
-  // cronJob.updateChannelStatistics();
-
   const port = process.env.PORT || 8080;
   const server = http.createServer(app);
   server.listen(port, () => console.log(`Server is listening at port ${port}`));
@@ -43,7 +40,6 @@ const main = async () => {
 
   const listener = new Listener(io);
   io.on("connection", (socket: Socket) => {
-    // console.log(`${socket.id} connected`);
     socket.emit("connection");
 
     listener.listen(socket);
