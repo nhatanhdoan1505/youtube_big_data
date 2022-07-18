@@ -20,28 +20,24 @@ export class PaymentService {
     lineItem: ILineItem[];
     uid: string;
   }) {
-    const paymentLink = await this.stripe.paymentLinks.create({
+    return this.stripe.paymentLinks.create({
       line_items: lineItem,
       after_completion: {
         type: "redirect",
-        redirect: { url: "http://localhost:3000/thankyou" },
+        redirect: { url: `http://${process.env.SERVER_ADDRESS}:3000/thankyou` },
       },
       metadata: { uid },
       customer_creation: "always",
     });
-
-    return paymentLink;
   }
 
   async createCustomer({ email }: IUser) {
-    const customer = await this.stripe.customers.create({ email });
-    return customer;
+    return this.stripe.customers.create({ email });
   }
 
   async getCustomerData({ id }: { id: string }) {
     try {
-      const customer = await this.stripe.customers.retrieve(id);
-      return customer;
+      return await this.stripe.customers.retrieve(id);
     } catch (error) {
       console.log(error);
       return false;

@@ -37,10 +37,10 @@ export class YoutubeService {
 
   async queryChannelId(userName: string) {
     let response: any;
-    for (let i = 0; i < this.API_KEYs.length; i++) {
+    for (let key of this.API_KEYs) {
       try {
         response = await axios.get(
-          `https://youtube.googleapis.com/youtube/v3/channels?part=id&forUsername=${userName}&key=${this.API_KEYs[i]}`
+          `https://youtube.googleapis.com/youtube/v3/channels?part=id&forUsername=${userName}&key=${key}`
         );
       } catch (error) {
         response = error;
@@ -48,8 +48,7 @@ export class YoutubeService {
 
       if (response.status !== 200 && !response.data) {
         this.outOfDateKey();
-        this.sufferApiKey(this.API_KEYs[i]);
-        continue;
+        this.sufferApiKey(key);
       } else break;
     }
     return response;
@@ -57,10 +56,10 @@ export class YoutubeService {
 
   async queryChannelSnippet(idEndpoint: string) {
     let response: any;
-    for (let i = 0; i < this.API_KEYs.length; i++) {
+    for (let key of this.API_KEYs) {
       try {
         response = await axios.get(
-          `https://www.googleapis.com/youtube/v3/channels?part=statistics&part=snippet&part=brandingSettings${idEndpoint}&key=${this.API_KEYs[i]}`
+          `https://www.googleapis.com/youtube/v3/channels?part=statistics&part=snippet&part=brandingSettings${idEndpoint}&key=${key}`
         );
       } catch (error) {
         response = error;
@@ -68,8 +67,7 @@ export class YoutubeService {
 
       if (response.status !== 200 && !response.data) {
         this.outOfDateKey();
-        this.sufferApiKey(this.API_KEYs[i]);
-        continue;
+        this.sufferApiKey(key);
       } else break;
     }
     return response;
@@ -78,23 +76,20 @@ export class YoutubeService {
   async queryVideoListOfChannel(channelId: string, pageToken = "") {
     let url: string;
     let response: any;
-    for (let i = 0; i < this.API_KEYs.length; i++) {
-      // console.log("QUERY VIDEO SNIPPET", i);
+    for (let key of this.API_KEYs) {
       url =
         pageToken === ""
-          ? `https://youtube.googleapis.com/youtube/v3/search?part=snippet&channelId=${channelId}&maxResults=50&order=date&key=${this.API_KEYs[i]}`
-          : `https://youtube.googleapis.com/youtube/v3/search?part=snippet&channelId=${channelId}&pageToken=${pageToken}&maxResults=50&order=date&key=${this.API_KEYs[i]}`;
+          ? `https://youtube.googleapis.com/youtube/v3/search?part=snippet&channelId=${channelId}&maxResults=50&order=date&key=${key}`
+          : `https://youtube.googleapis.com/youtube/v3/search?part=snippet&channelId=${channelId}&pageToken=${pageToken}&maxResults=50&order=date&key=${key}`;
       try {
         response = await axios.get(url);
       } catch (error) {
         response = error;
       }
 
-      // console.log("Handler");
       if (response.status !== 200 && !response.data) {
         this.outOfDateKey();
-        this.sufferApiKey(this.API_KEYs[i]);
-        continue;
+        this.sufferApiKey(key);
       } else break;
     }
     return response;
@@ -103,20 +98,17 @@ export class YoutubeService {
   async queryVideoInformation(idEndpoint: string) {
     let url: string;
     let response: any;
-    for (let i = 0; i < this.API_KEYs.length; i++) {
-      // console.log("QUERY VIDEO STATISTIC", i);
-      url = `https://youtube.googleapis.com/youtube/v3/videos?part=snippet&part=statistics&part=status&part=contentDetails${idEndpoint}&key=${this.API_KEYs[i]}`;
+    for (let key of this.API_KEYs) {
+      url = `https://youtube.googleapis.com/youtube/v3/videos?part=snippet&part=statistics&part=status&part=contentDetails${idEndpoint}&key=${key}`;
       try {
         response = await axios.get(url);
       } catch (error) {
         response = error;
       }
 
-      // console.log("Handler");
       if (response.status !== 200 && !response.data) {
         this.outOfDateKey();
-        this.sufferApiKey(this.API_KEYs[i]);
-        continue;
+        this.sufferApiKey(key);
       } else break;
     }
     return response;

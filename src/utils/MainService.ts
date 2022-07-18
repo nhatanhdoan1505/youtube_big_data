@@ -5,7 +5,6 @@ import {
   VideoDescription,
   IChannelBaseInformation,
 } from "models/channel/type";
-import { ChannelService } from "../models/channel/service";
 import {
   ChannelIdFromAPI,
   // ChannelInformation,
@@ -221,27 +220,14 @@ export class MainService {
       .reduce((pre, next) => pre.concat(next), []);
 
     const videosData: IVideo[] = videoBasicInformation.map((vBasic) => {
-      let videoStatistic: VideoStatistic = {
-        likes: "",
-        dislikes: "",
-        views: "",
-        commentCount: "",
-      };
-      let videoDescription: VideoDescription = {
-        description: "",
-        tags: [],
-        madeForKids: false,
-        duration: "",
-      };
       const videosData = videoList.find((v) => vBasic.id === v.id);
-
-      videoStatistic = {
+      let videoStatistic = {
         likes: videosData ? videosData.statistics.likeCount : "-1",
         dislikes: videosData ? videosData.statistics.dislikeCount : "-1",
         views: videosData ? videosData.statistics.viewCount : "-1",
         commentCount: videosData ? videosData.statistics.commentCount : "-1",
       };
-      videoDescription = {
+      let videoDescription = {
         description: videosData ? videosData.snippet.description : "",
         tags: videosData ? videosData.snippet.tags : [],
         madeForKids: videosData ? videosData.status.madeForKids : false,
@@ -309,7 +295,7 @@ export class MainService {
   async updateVideosInformation(videos: IVideo[]) {
     const newInformation: IVideo[] = await this.getVideoFullInformation(videos);
 
-    const videoNewInformation = videos.map((oldV) => {
+    return videos.map((oldV) => {
       let { views, date, likes, dislikes, commentCount } = oldV;
       let video = newInformation.find((v) => v.id === oldV.id);
       return {
@@ -326,7 +312,6 @@ export class MainService {
         date: `${date}|${new Date().toString()}`,
       };
     });
-    return videoNewInformation;
   }
 
   async scanOldChannelInformation(data: IChannel[]) {
