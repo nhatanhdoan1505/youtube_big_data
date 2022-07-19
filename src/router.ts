@@ -17,10 +17,6 @@ export class Router {
   }
 
   route() {
-    this.app.post("/api/refresh", (req, res) => {
-      return this.channelController.refresh(req, res);
-    });
-
     this.app.post("/api/user", (req, res) => {
       return this.userController.updateUser(req, res);
     });
@@ -73,36 +69,12 @@ export class Router {
       return this.serviceController.test(req, res);
     });
 
-    this.app.get("/api/channels", (req, res) => {
-      return this.channelController.getAllChannels(req, res);
-    });
-
-    this.app.post("/api/channel/label", (req, res) => {
-      return this.channelController.getChannelFromDBByLabel(req, res);
-    });
-
     this.app.get("/api/system", (req, res) => {
       return this.channelController.getSystemInformation(req, res);
     });
 
-    this.app.post("/api/channel/id", (req, res) => {
-      return this.channelController.getChannelFromDBById(req, res);
-    });
-
-    this.app.delete("/api/channel/duplicate", (req, res) => {
-      return this.channelController.deleteChannel(req, res);
-    });
-
     this.app.get("/api/channel/label/", (req, res) => {
       return this.channelController.getAllLabel(req, res);
-    });
-
-    this.app.post("/api/video/hot", (req, res) => {
-      return this.channelController.updateHotVideo(req, res);
-    });
-
-    this.app.post("/api/channel/hot", (req, res) => {
-      return this.channelController.updateHotChannel(req, res);
     });
 
     this.app.post("/api/channel/sort/:pageNumber", (req, res) => {

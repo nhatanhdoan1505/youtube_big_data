@@ -17,56 +17,20 @@ export class ChannelController {
   private hotVideoService: HotVideoService = new HotVideoService();
   private hotChannelService: HotChannelService = new HotChannelService();
 
-  async refresh(req, res) {
-    let channelList = await this.channelService.filterChannel({});
-    channelList = channelList
-      .filter((channel) => {
-        let rep = channelList.filter((c) => c.id === channel.id).length;
-        if (rep === 1) return channel;
-        if (rep > 1 && channel.date.split("|").length > 1) return channel;
-        else return null;
-      })
-      .filter((c) => c);
-    await this.channelService.deleteChannel({});
-    fs.writeFileSync("refresh.txt", JSON.stringify(channelList));
-  }
-
   async getSystemInformation(req, res) {
-    let views = (
+    let { views, subscribers, numberVideos, numberChannels } = (
       await this.hotChannelService.queryHotChannel([
-        { $group: { _id: "", views: { $sum: "$views" } } },
         {
-          $project: {
-            _id: 0,
-            views: "$views",
+          $group: {
+            _id: "",
+            views: { $sum: "$views" },
+            subscribers: { $sum: "$subscribe" },
+            numberVideos: { $sum: "$numberVideos" },
+            numberChannels: { $sum: 1 },
           },
         },
       ])
-    )[0].views;
-    let subscribers = (
-      await this.hotChannelService.queryHotChannel([
-        { $group: { _id: "", subscribe: { $sum: "$subscribe" } } },
-        {
-          $project: {
-            _id: 0,
-            subscribe: "$subscribe",
-          },
-        },
-      ])
-    )[0].subscribe;
-    let numberVideos = (
-      await this.hotChannelService.queryHotChannel([
-        { $group: { _id: "", numberVideos: { $sum: "$numberVideos" } } },
-        {
-          $project: {
-            _id: 0,
-            numberVideos: "$numberVideos",
-          },
-        },
-      ])
-    )[0].numberVideos;
-
-    let numberChannels = await this.hotChannelService.getTotalHotChannel();
+    )[0];
 
     return res.status(200).json({
       status: "OK",
@@ -75,59 +39,14 @@ export class ChannelController {
     });
   }
 
-  async deleteChannel(req, res) {
-    const idList = (
-      await this.channelService.queryChannel([
-        { $group: { _id: "$id", count: { $sum: 1 } } },
-      ])
-    )
-      .filter((d) => d.count > 1)
-      .map((c) => c._id);
-    const promise = idList.map((id) =>
-      this.channelService.deleteChannel({ id })
-    );
-    await Promise.all(promise);
-    return res.status(200).json({ status: "OK", msg: "OK", data: idList });
-  }
-
-  async getAllChannels(req, res) {
-    const channels = await this.channelService.filterChannel({});
-    return res.status(200).json({ status: "OK", data: channels });
-  }
-
-  async getChannelFromDBByLabel(req, res) {
-    if (!req.body.label)
-      return res
-        .status(400)
-        .json({ status: "FAIL", msg: "Insufficient parameter" });
-    const channelData = await this.channelService.filterChannel({
-      label: req.body.label,
-    });
-    return res.status(200).json({ status: "OK", data: channelData });
-  }
-
-  async getChannelFromDBById(req, res) {
-    if (!req.body.id)
-      return res
-        .status(400)
-        .json({ status: "FAIL", msg: "Insufficient parameter" });
-    const channelData = await this.channelService.findChannel({
-      id: req.body.id,
-    });
-    return res.status(200).json({ status: "OK", data: channelData });
-  }
-
   async getAllLabel(req, res) {
     let labelList = (
-      await this.channelService.queryChannel([{ $group: { _id: "$label" } }])
+      await this.hotChannelService.queryHotChannel([
+        { $group: { _id: "$label" } },
+      ])
     ).map((c) => c._id);
 
     return res.status(200).json({ status: "OK", data: { labelList } });
-  }
-
-  async updateHotChannel(req, res) {
-
-    return res.status(200).json({ status: "OK" });
   }
 
   async getSortChannel(req, res) {
@@ -160,14 +79,9 @@ export class ChannelController {
       status: "OK",
       data: {
         channelList,
-
         pageNumber,
       },
     });
-  }
-
-  async updateHotVideo(req, res) {
-    return res.status(200).json({ status: "OK" });
   }
 
   async getTotalSortChannels(req, res) {
@@ -189,6 +103,7 @@ export class ChannelController {
   async getTotalVideoOfChannel(req, res) {
     const totalVideos = (
       await this.hotVideoService.queryHotVideo([
+        { $project: { channelInformation: 1 } },
         {
           $match: {
             "channelInformation.id": req.params.id,
@@ -206,46 +121,6 @@ export class ChannelController {
       data: {
         totalVideos,
         totalPage,
-      },
-    });
-  }
-
-  async getChannelInformation(req, res) {
-    if (!req.params.id)
-      return res
-        .status(400)
-        .json({ status: "FAIL", msg: "Insufficient parameter" });
-
-    let channelData = await this.hotChannelService.findHotChannel({
-      id: req.params.id,
-    });
-
-    if (!channelData)
-      return res
-        .status(404)
-        .json({ status: "FAIL", msg: "Insufficient parameter", data: {} });
-
-    let viewsRank = -1;
-    let subscribeRank = -1;
-    if (channelData.views > 0) {
-      let sortViewsChannel = await this.hotChannelService.queryHotChannel([
-        { $sort: { views: -1 } },
-      ]);
-      viewsRank =
-        sortViewsChannel.findIndex((c) => c.id === channelData.id) + 1;
-    }
-    if (channelData.subscribe > 0) {
-      let sortSubscribeChannel = await this.hotChannelService.queryHotChannel([
-        { $sort: { subscribe: -1 } },
-      ]);
-      subscribeRank =
-        sortSubscribeChannel.findIndex((c) => c.id === channelData.id) + 1;
-    }
-
-    return res.status(200).json({
-      status: "OK",
-      data: {
-        channel: { ...channelData, viewsRank, subscribeRank },
       },
     });
   }
@@ -293,29 +168,17 @@ export class ChannelController {
     const dataDuration = (
       await this.hotVideoService.queryHotVideo(
         [
+          { $project: { channelInformation: 1, duration: 1 } },
           {
-            $facet: {
-              videos: [
-                {
-                  $match: {
-                    "channelInformation.id": req.params.id,
-                  },
-                },
-                { $group: { _id: null, count: { $sum: 1 } } },
-              ],
-              totalDuration: [
-                {
-                  $match: {
-                    "channelInformation.id": "UCrmrMEeVpzHfOsc7vqG4xeg",
-                  },
-                },
-                {
-                  $group: {
-                    _id: "channelInformation.id",
-                    totalDuration: { $sum: "$duration" },
-                  },
-                },
-              ],
+            $match: {
+              "channelInformation.id": req.params.id,
+            },
+          },
+          {
+            $group: {
+              _id: null,
+              totalDuration: { $sum: "$duration" },
+              video: { $sum: 1 },
             },
           },
         ],
@@ -323,8 +186,8 @@ export class ChannelController {
       )
     )[0];
 
-    let totalDuration: number = dataDuration.totalDuration[0].totalDuration;
-    let videos: number = dataDuration.videos[0].count;
+    let totalDuration: number = dataDuration.totalDuration;
+    let videos: number = dataDuration.videos;
     const durationPerVideo = Math.trunc(+totalDuration / +videos);
     const uploadPerWeek = (+channel.numberVideos / (days / 7)).toFixed(1);
     const subscribeGrowPer10K = Math.trunc(

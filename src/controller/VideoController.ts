@@ -115,6 +115,7 @@ export class VideoController {
     const totalVideos = (
       await this.hotVideoService.queryHotVideo(
         [
+          { $project: { tags: 1 } },
           { $match: { $expr: { $in: [req.body.tag, "$tags"] } } },
           { $group: { _id: null, count: { $sum: 1 } } },
         ],
@@ -222,6 +223,7 @@ export class VideoController {
     const totalVideos = (
       await this.hotVideoService.queryHotVideo(
         [
+          { $project: { keywords: 1 } },
           { $match: { $expr: { $in: [req.body.keyword, "$keywords"] } } },
           { $group: { _id: null, count: { $sum: 1 } } },
         ],
@@ -288,7 +290,7 @@ export class VideoController {
           : videoDurationStatistics[i][0].count;
     }
     averageViewsRecommendedDuration = [...averageVideoViewList]
-      .sort((a, b) => (a - b))
+      .sort((a, b) => a - b)
       .reverse()[0];
     for (let i in _videoDurationStatistics) {
       if (
@@ -407,6 +409,7 @@ export class VideoController {
     let averageVideoView = (
       await this.hotVideoService.queryHotVideo(
         [
+          { $project: { views: 1 } },
           { $match: { views: { $gt: 0 } } },
           { $group: { _id: null, average: { $avg: "$views" } } },
         ],
@@ -425,6 +428,7 @@ export class VideoController {
   async getVideoTagsStatistics(req, res) {
     let videoTagsStatistics = await this.hotVideoService.queryHotVideo(
       [
+        { $project: { tags: 1, views: 1 } },
         {
           $addFields: {
             numberTags: { $size: "$tags" },

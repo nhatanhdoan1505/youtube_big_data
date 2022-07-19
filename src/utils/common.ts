@@ -48,6 +48,7 @@ export const queryVideoViewDistribution = ({ id }: { id: string }) => {
     let big = VIDEO_VIEW_DISTRIBUTION[i];
     let small = VIDEO_VIEW_DISTRIBUTION[i - 1];
     query["$facet"][VIDEO_VIEW_DISTRIBUTION[i]] = [
+      { $project: { channelInformation: 1, views: 1 } },
       {
         $match: {
           $and: [
@@ -61,6 +62,7 @@ export const queryVideoViewDistribution = ({ id }: { id: string }) => {
     ];
   }
   query["$facet"][VIDEO_VIEW_DISTRIBUTION[0]] = [
+    { $project: { channelInformation: 1, views: 1 } },
     {
       $match: {
         $and: [
@@ -80,6 +82,7 @@ export const queryVideoDurationStatistic = () => {
     let small = i;
     if (i >= 3601) {
       query["$facet"][i] = [
+        { $project: { duration: 1, views: 1 } },
         {
           $match: {
             $and: [{ duration: { $gte: small } }],
@@ -95,6 +98,7 @@ export const queryVideoDurationStatistic = () => {
       ];
     } else {
       query["$facet"][i] = [
+        { $project: { duration: 1, views: 1 } },
         {
           $match: {
             $and: [{ duration: { $lt: big } }, { duration: { $gte: small } }],
@@ -120,6 +124,7 @@ export const queryVideoDurationViews = () => {
     let small = i;
     if (i >= 3601) {
       query["$facet"][i] = [
+        { $project: { duration: 1, views: 1 } },
         {
           $match: {
             $and: [{ duration: { $gte: small } }],
@@ -129,6 +134,7 @@ export const queryVideoDurationViews = () => {
       ];
     } else {
       query["$facet"][i] = [
+        { $project: { duration: 1, views: 1 } },
         {
           $match: {
             $and: [{ duration: { $lt: big } }, { duration: { $gte: small } }],
@@ -148,6 +154,7 @@ export const queryVideoViewStatistic = () => {
     let big = VIEW_STATISTIC[i];
     let small = VIEW_STATISTIC[i - 1];
     query["$facet"][VIEW_STATISTIC[i]] = [
+      { $project: { views: 1 } },
       {
         $match: {
           $and: [{ views: { $lt: big } }, { views: { $gte: small } }],
@@ -165,7 +172,7 @@ export const queryVideoViewStatistic = () => {
 };
 
 export const removeHtmlEntities = (str: string) => {
-  Object.keys(HTML_ENTITIES).map((e) => {
+  Object.keys(HTML_ENTITIES).forEach((e) => {
     str = str.replace(new RegExp(e, "g"), HTML_ENTITIES[e]);
   });
   return str;
@@ -189,15 +196,13 @@ export const detectKeyword = (text: string): string[] => {
   text = removeHtmlEntities(text);
   text = text.replace(/[&\/\\#|,+()$~%.'":*?<>{}]/g, "");
   let exactor: any = keywordExtractor;
-  const keywordList = exactor.extract(text, {
+  return exactor.extract(text, {
     language: language as LanguageName,
     remove_digits: true,
     return_changed_case: true,
     return_chained_words: true,
     remove_duplicates: false,
   });
-
-  return keywordList;
 };
 
 export const queryUploadStatistic = [
@@ -714,6 +719,7 @@ export const queryChannelSubscriberStatistic = () => {
     let small = CHANNEL_SUBSCRIBER_DISTRIBUTION[i - 1];
     if (i === CHANNEL_SUBSCRIBER_DISTRIBUTION.length - 1) {
       query["$facet"][CHANNEL_SUBSCRIBER_DISTRIBUTION[i]] = [
+        { $project: { subscribe: 1 } },
         {
           $match: {
             $and: [
@@ -731,6 +737,7 @@ export const queryChannelSubscriberStatistic = () => {
       continue;
     }
     query["$facet"][CHANNEL_SUBSCRIBER_DISTRIBUTION[i]] = [
+      { $project: { subscribe: 1 } },
       {
         $match: {
           $and: [{ subscribe: { $lt: big } }, { subscribe: { $gte: small } }],
