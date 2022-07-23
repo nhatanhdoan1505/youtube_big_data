@@ -21,7 +21,10 @@ export class UserController {
     let user = await this.userService.findUser({ uid });
 
     if (user) {
-      await this.userService.updateUser({ uid }, { photoUrl, name });
+      await this.userService.updateUser(
+        { uid },
+        { name, photoUrl, uid, email }
+      );
       return res.status(200).json({ status: "OK", data: {} });
     }
 
@@ -57,7 +60,7 @@ export class UserController {
       );
       isPremium = expired.getTime() >= Date.now() ? true : false;
     }
-    
+
     return res
       .status(200)
       .json({ status: "OK", data: { userData: { ...userData, isPremium } } });

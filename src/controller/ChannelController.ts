@@ -186,9 +186,10 @@ export class ChannelController {
       )
     )[0];
 
-    let totalDuration: number = dataDuration.totalDuration;
-    let videos: number = dataDuration.videos;
-    const durationPerVideo = Math.trunc(+totalDuration / +videos);
+    let totalDuration: number = dataDuration ? dataDuration.totalDuration : 0;
+    let videos: number = dataDuration ? dataDuration.videos : 0;
+    const durationPerVideo =
+      totalDuration === 0 ? 0 : Math.trunc(+totalDuration / +videos);
     const uploadPerWeek = (+channel.numberVideos / (days / 7)).toFixed(1);
     const subscribeGrowPer10K = Math.trunc(
       (+channel.subscribe / +channel.views) * 10000
