@@ -441,7 +441,7 @@ export class YoutubeHandler {
     });
   }
 
-  async updateChannelInformation({ label }: { label: string }) {
+  async updateChannelInformation({ label }: { label?: string }) {
     if (!this.ready)
       return this.emitter.serverStatus({
         ready: this.ready,
@@ -488,8 +488,7 @@ export class YoutubeHandler {
             { $skip: skip },
             { $limit: 50 },
           ])
-        : await this.channelService.filterChannel([
-            { $match: { label } },
+        : await this.channelService.queryChannel([
             { $skip: skip },
             { $limit: 50 },
           ]);

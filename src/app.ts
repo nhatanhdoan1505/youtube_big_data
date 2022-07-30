@@ -1,3 +1,4 @@
+import { CronJob } from "./cronJob";
 import * as bodyParser from "body-parser";
 import cors from "cors";
 import express from "express";
@@ -39,6 +40,9 @@ const main = async () => {
   });
 
   const listener = new Listener(io);
+  const cronJob = new CronJob(io);
+  cronJob.updateDB();
+  cronJob.firstUpdate();
   io.on("connection", (socket: Socket) => {
     socket.emit("connection");
 

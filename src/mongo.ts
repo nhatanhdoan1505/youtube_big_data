@@ -11,7 +11,7 @@ const options: ConnectOptions & ConnectionOptionsExtend = {
   useUnifiedTopology: false,
   user: "admin",
   pass: "123456",
-  dbName: "youtubedata",
+  dbName: "youtubedata1",
 };
 
 export const connectMongo = async () => {
