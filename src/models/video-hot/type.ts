@@ -23,7 +23,7 @@ export interface IHotVideo {
   madeForKids: boolean;
   keywords: string[];
   channelInformation: {
-    label?: string;
+    label?: string[];
     urlChannel: string;
     id: string;
     subscribe: string;

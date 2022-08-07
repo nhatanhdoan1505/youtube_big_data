@@ -19,9 +19,10 @@ export class ChannelService {
     return Channel.findOne(query).lean();
   }
 
-  async updateChannel(query, params): Promise<IChannel> {
+  async updateChannel(query, params, options?: any): Promise<IChannel> {
     let { _id, ...updateChannel } = params;
     return Channel.findOneAndUpdate(query, updateChannel, {
+      ...options,
       new: true,
     }).lean();
   }

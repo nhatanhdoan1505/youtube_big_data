@@ -1,5 +1,5 @@
 export interface IChannelBaseInformation {
-  label?: string;
+  label?: string[];
   urlChannel: string;
   id: string;
   subscribe: string;
@@ -12,6 +12,8 @@ export interface IChannelBaseInformation {
   description: string;
   publishedAt?: Date;
   tags: string;
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
 export interface IChannel extends IChannelBaseInformation {

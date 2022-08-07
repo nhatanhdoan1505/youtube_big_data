@@ -41,8 +41,8 @@ const main = async () => {
 
   const listener = new Listener(io);
   const cronJob = new CronJob(io);
-  cronJob.updateDB();
-  cronJob.firstUpdate();
+  // cronJob.updateDB();
+  // cronJob.firstUpdate();
   io.on("connection", (socket: Socket) => {
     socket.emit("connection");
 

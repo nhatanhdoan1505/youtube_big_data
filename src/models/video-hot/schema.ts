@@ -30,7 +30,7 @@ export default mongoose.model(
     madeForKids: { type: Boolean, default: false },
     keywords: [{ type: String, default: null }],
     channelInformation: {
-      label: { type: String, default: "" },
+      label: [{ type: String, default: "" }],
       urlChannel: { type: String },
       id: { type: String },
       subscribe: { type: String, default: "" },

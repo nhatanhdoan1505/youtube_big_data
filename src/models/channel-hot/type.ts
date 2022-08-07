@@ -1,5 +1,5 @@
 export interface IHotChannel {
-  label: string;
+  label: string[];
   urlChannel: string;
   id: string;
   subscribe: number;
@@ -19,4 +19,6 @@ export interface IHotChannel {
   description: string;
   tags: string;
   averageUpload: number;
+  createdAt?: Date;
+  updatedAt?: Date;
 }

@@ -41,8 +41,21 @@ export class ChannelController {
 
   async getAllLabel(req, res) {
     let labelList = (
-      await this.hotChannelService.queryHotChannel([
-        { $group: { _id: "$label" } },
+      await this.channelService.queryChannel([
+        { $project: { label: 1 } },
+        {
+          $unwind: {
+            path: "$label",
+          },
+        },
+        {
+          $group: {
+            _id: "$label",
+            count: {
+              $sum: 1,
+            },
+          },
+        },
       ])
     ).map((c) => c._id);
 

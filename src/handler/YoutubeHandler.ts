@@ -19,7 +19,6 @@ export class YoutubeHandler {
   private io: Server;
 
   private ready: boolean = true;
-  private loading: number = 0;
   private serviceRunning: "UPDATE" | "GET" | "OPTIMIZE" = null;
   private numberWorked: number = 0;
   private total: number = 0;
@@ -217,7 +216,7 @@ export class YoutubeHandler {
     let totalData = label
       ? (
           await this.channelService.queryChannel([
-            { $match: { label } },
+            { $match: { label: { $in: [label] } } },
             { $project: { _id: 1 } },
             { $group: { _id: null, count: { $sum: 1 } } },
           ])
@@ -251,7 +250,7 @@ export class YoutubeHandler {
       console.log("j");
       channelList = label
         ? await this.channelService.queryChannel([
-            { $match: { label } },
+            { $match: { label: { $in: [label] } } },
             { $skip: skip },
             { $limit: 50 },
           ])
@@ -356,12 +355,21 @@ export class YoutubeHandler {
     this.ready = false;
     this.serviceRunning = "GET";
 
-    let existChannel = (
+    let existChannelDifferenceLabel = (
       await this.channelService.queryChannel([
-        { $match: { label } },
+        { $project: { id: 1, label: 1 } },
+        { $match: { label: { $nin: [label] } } },
         { $project: { id: 1 } },
       ])
-    ).map((c) => c.id);
+    ).map((c) => c.id) as string[];
+
+    let existChannelWithLabel = (
+      await this.channelService.queryChannel([
+        { $project: { id: 1, label: 1 } },
+        { $match: { label: { $in: [label] } } },
+        { $project: { id: 1 } },
+      ])
+    ).map((c) => c.id) as string[];
 
     let listUrl = url.split(",").map((url) => {
       if (url[url.length - 1] === "/") {
@@ -369,13 +377,12 @@ export class YoutubeHandler {
       }
       return url;
     });
+
     let listId: string[] = listUrl
       .filter((url) => url.includes("channel"))
       .map((url) => url.replace("//", ""))
       .map((url) => url.split("/"))
       .map((url) => url[url.length - 1]);
-    listId = _.uniq(listId);
-    listId = _.xor(listId, existChannel);
 
     let listUserName = listUrl
       .filter((url) => !url.includes("channel"))
@@ -387,7 +394,43 @@ export class YoutubeHandler {
     let idFromUser = await this.mainService.getChannelId(listUserName);
     listId = [...listId, ...idFromUser];
     listId = _.uniq(listId);
+    listId = _.xor(listId, existChannelWithLabel);
 
+    let listIdWithDifferenceLabel = _.intersection(
+      listId,
+      existChannelDifferenceLabel
+    ) as string[];
+
+    let i = 0;
+    this.total = listIdWithDifferenceLabel.length;
+    this.numberWorked = 0;
+    this.emitter.serverStatus({
+      ready: this.ready,
+      serviceRunning: this.serviceRunning,
+      total: this.total,
+      numberWorked: this.numberWorked,
+    });
+    while (i < listId.length) {
+      const id = listIdWithDifferenceLabel.slice(i, i + 5);
+      const updateLabelPromise = id.map((i) =>
+        this.channelService.updateChannel(
+          { id: i },
+          { $push: { label } },
+          { timestamps: false }
+        )
+      );
+      await Promise.all(updateLabelPromise);
+      i += 5;
+      this.numberWorked += 5;
+      this.emitter.serverStatus({
+        ready: this.ready,
+        serviceRunning: this.serviceRunning,
+        total: this.total,
+        numberWorked: this.numberWorked,
+      });
+    }
+
+    listId = _.xor(listId, listIdWithDifferenceLabel);
     if (listId.length === 0) {
       this.emitter.serverStatus({
         ready: this.ready,
@@ -397,7 +440,7 @@ export class YoutubeHandler {
       return this.serverReady();
     }
 
-    let i = 0;
+    i = 0;
     let channelList: IChannel[] = [];
 
     this.total = listId.length;
@@ -414,7 +457,7 @@ export class YoutubeHandler {
       channelList = await this.mainService.getChannel(listId.slice(i, i + 5));
 
       channelList = channelList.map((c) => {
-        return { ...c, label };
+        return { ...c, label: [label] };
       });
 
       const saveDataPromise = channelList.map((c: IChannel) =>
@@ -433,6 +476,7 @@ export class YoutubeHandler {
     }
 
     this.serverReady();
+
     return this.emitter.serverStatus({
       ready: this.ready,
       serviceRunning: this.serviceRunning,
@@ -453,12 +497,36 @@ export class YoutubeHandler {
     const totalData = label
       ? (
           await this.channelService.queryChannel([
-            { $match: { label } },
+            {
+              $project: {
+                id: 1,
+                label: 1,
+                gapUpdate: { $subtract: [new Date(), "$updatedAt"] },
+              },
+            },
+            {
+              $match: {
+                label: { $in: [label] },
+                gapUpdate: { $gte: 86400000 },
+              },
+            },
             { $group: { _id: null, count: { $sum: 1 } } },
           ])
         )[0].count
       : (
           await this.channelService.queryChannel([
+            {
+              $project: {
+                id: 1,
+                label: 1,
+                gapUpdate: { $subtract: [new Date(), "$updatedAt"] },
+              },
+            },
+            {
+              $match: {
+                gapUpdate: { $gte: 86400000 },
+              },
+            },
             { $group: { _id: null, count: { $sum: 1 } } },
           ])
         )[0].count;
@@ -484,11 +552,25 @@ export class YoutubeHandler {
     while (j < numberLoop) {
       data = label
         ? await this.channelService.queryChannel([
-            { $match: { label } },
+            { $match: { label: { $in: [label] } } },
+            {
+              $addFields: {
+                gapUpdate: { $subtract: [new Date(), "$updatedAt"] },
+              },
+            },
+            { $match: { gapUpdate: { $gte: 86400000 } } },
             { $skip: skip },
             { $limit: 50 },
           ])
         : await this.channelService.queryChannel([
+            {
+              $addFields: {
+                gapUpdate: { $subtract: [new Date(), "$updatedAt"] },
+              },
+            },
+            { $match: { gapUpdate: { $gte: 86400000 } } },
+            { $skip: skip },
+            { $limit: 50 },
             { $skip: skip },
             { $limit: 50 },
           ]);

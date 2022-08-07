@@ -6,7 +6,7 @@ export default mongoose.model(
   "HotChannel",
   new schema({
     _id: { type: Types.ObjectId },
-    label: { type: String },
+    label: [{ type: String }],
     urlChannel: { type: String },
     id: { type: String },
     subscribe: { type: Number },
@@ -26,5 +26,8 @@ export default mongoose.model(
     description: { type: String, default: "" },
     tags: { type: String, default: "" },
     averageUpload: { type: Number, default: null },
+    lastUpdate: { type: Date, default: Date.now },
+    createdAt: { type: Date },
+    updatedAt: { type: Date },
   })
 );
